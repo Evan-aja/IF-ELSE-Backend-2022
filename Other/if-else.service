@@ -1,0 +1,12 @@
+[Unit]
+Description=GO server IF-ELSE 2022
+After=network.target
+
+[Service]
+WorkingDirectory=/opt/IF-ELSE-Backend-2022
+ExecStart=bash -c "export GOPATH=$PWD/go && export GOCACHE=$PWD/go-build && go get && go run main.go >> /var/log/ifelse.log"
+Restart=on-failure
+ExecStop=killall go
+
+[Install]
+WantedBy=multi-user.target

@@ -22,6 +22,8 @@ It is written with Go version 1.18 and uses MariaDB / MySQL as its database.
 
 5. To run the project, type in `go run main.go`
 
+6. If ypu want to deploy this with systemd daemon, go to [Other](./Other) and run `bash production-up.sh`
+
 ### Links and other documentation
 
 1. [Why use the .env file?](https://www.freecodecamp.org/learn/back-end-development-and-apis/basic-node-and-express/use-the--env-file)
