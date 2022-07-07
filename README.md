@@ -1,9 +1,9 @@
 # IF-ELSE-Backend-2022
 Repository backend IF ELSE 2022
 
-1. [About](./README.md#about)
-2. [How to deploy](./README.md#how-to-deploy)
-3. [Links and other documentation](./README.md)
+1. [About](#about)
+2. [How to deploy](#how-to-deploy)
+3. [Links and other documentation](#links-and-other-documentation)
 
 ### About
 This is the backend repository for the IF-ELSE's web application for 2022.
