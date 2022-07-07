@@ -7,19 +7,30 @@ import (
 	"os"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 )
 
 func main() {
+
+	if err := godotenv.Load(); err != nil {
+		log.Fatal(err.Error())
+	}
+
 	//Database
-	db := Database.Open()
-	if db != nil {
+	if db := Database.Open(); db != nil {
 		println("Nice, DB Connected")
 	}
 
 	// Gin Framework
 	gin.SetMode(os.Getenv("GIN_MODE"))
 	r := gin.Default()
-	r.SetTrustedProxies([]string{os.Getenv("PROXY_1"), os.Getenv("PROXY_2"), os.Getenv("PROXY_3")})
+	r.SetTrustedProxies(
+		[]string{
+			os.Getenv("PROXY_1"),
+			os.Getenv("PROXY_2"),
+			os.Getenv("PROXY_3"),
+		},
+	)
 
 	//CORS
 	r.Use(func(c *gin.Context) {
