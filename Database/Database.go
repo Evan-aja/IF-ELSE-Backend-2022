@@ -2,6 +2,7 @@ package Database
 
 import (
 	"fmt"
+	"ifelse/Model"
 	"log"
 	"os"
 
@@ -30,7 +31,7 @@ func Open() *gorm.DB {
 	}
 
 	// Model
-	if err = db.AutoMigrate( /*model taruh disini*/ ); err != nil {
+	if err = db.AutoMigrate(&Model.User{}); err != nil {
 		log.Fatal(err.Error())
 	}
 	return db
