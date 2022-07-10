@@ -24,13 +24,16 @@ func main() {
 	// Gin Framework
 	gin.SetMode(os.Getenv("GIN_MODE"))
 	r := gin.Default()
-	r.SetTrustedProxies(
+	err := r.SetTrustedProxies(
 		[]string{
 			os.Getenv("PROXY_1"),
 			os.Getenv("PROXY_2"),
 			os.Getenv("PROXY_3"),
 		},
 	)
+	if err != nil {
+		panic(err)
+	}
 
 	//CORS
 	r.Use(func(c *gin.Context) {
