@@ -5,14 +5,15 @@ import (
 )
 
 type User struct {
-	ID           uint      `gorm:"primaryKey" json:"id"`
-	Name         string    `json:"nama"`
-	Username     string    `gorm:"uniqueIndex;size:20;notNull" json:"username"`
-	Password     string    `gorm:"notNull" json:"password"`
-	ApiToken     string    `gorm:"null;uniqueIndex" json:"api_token"`
-	RoleId       string    `gorm:"default:1" json:"role_id"`
-	StudentId    uint      `gorm:"null"`
-	PermittedFor string    `gorm:"default:news,tasks,quizs"`
-	CreatedAt    time.Time `json:"created_at"`
-	UpdatedAt    time.Time `json:"updated_at"`
+	ID            uint      `gorm:"primaryKey" json:"id"`
+	Name          string    `gorm:"notNull;size:255" json:"name"`
+	Username      string    `gorm:"size:255;notNull" json:"username"`
+	Password      string    `gorm:"notNull;size:255" json:"password"`
+	ApiToken      string    `gorm:"null;uniqueIndex;size:80;" json:"api_token"`
+	RoleId        string    `gorm:"default:1;notNull;size:255" json:"role_id"`
+	StudentId     uint32    `gorm:"null"`
+	PermittedFor  string    `gorm:"default:news,tasks,quizs;size:255;notNull"`
+	RememberToken string    `gorm:"size:100"`
+	CreatedAt     time.Time `json:"created_at"`
+	UpdatedAt     time.Time `json:"updated_at"`
 }
