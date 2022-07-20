@@ -11,7 +11,7 @@ type Agenda struct {
 	Image            string    `gorm:"size:255;notNull" json:"image"`
 	StartAt          time.Time `gorm:"notNull" json:"start_at"`
 	EndAt            time.Time `gorm:"notNull" json:"end_at"`
-	PendataanStartAt time.Time `gorm:"default:current_timestamp;notNull" json:"pendataan_start_at"`
+	PendataanStartAt time.Time `gorm:"default:current_timestamp" json:"pendataan_start_at"`
 	PendataanEndAt   time.Time `gorm:"default:current_timestamp;notNull" json:"pendataan_end_at"`
 	PerizinanStartAt time.Time `gorm:"default:current_timestamp;notNull" json:"perizinan_start_at"`
 	PerizinanEndAt   time.Time `gorm:"default:current_timestamp;notNull" json:"perizinan_end_at"`
