@@ -10,4 +10,5 @@ type Student struct {
 	Whatsapp string `gorm:"null;size:255" json:"whatsapp"`
 	Line     string `gorm:"null;size:255" json:"line"`
 	Avatar   string `gorm:"null;size:255" json:"avatar"`
+	About    string `gorm:"size:255;null" json:"about"`
 }
