@@ -19,3 +19,9 @@ type User struct {
 	CreatedAt     time.Time `json:"created_at"`
 	UpdatedAt     time.Time `json:"updated_at"`
 }
+
+type ChangePassword struct {
+	Password string `gorm:"notNull;size:255" json:"password"`
+	Newpass1 string `gorm:"notNull;size:255" json:"newpass1"`
+	Newpass2 string `gorm:"notNull;size:255" json:"newpass2"`
+}

@@ -37,4 +37,126 @@ func User(db *gorm.DB, q *gin.Engine) {
 		})
 	})
 
+	r.PATCH("/profile", Auth.Authorization(), func(c *gin.Context) {
+		id, _ := c.Get("id")
+
+		var body Model.Student
+
+		if err := c.BindJSON(&body); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"success": false,
+				"message": "body is invalid",
+				"error":   err.Error(),
+			})
+			return
+		}
+
+		mahasiswa := Model.Student{
+			Nickname: body.Nickname,
+			Address:  body.Address,
+			Line:     body.Line,
+			Whatsapp: body.Whatsapp,
+			About:    body.About,
+			Avatar:   body.Avatar,
+		}
+
+		result := db.Where("id = ?", id).Model(&mahasiswa).Updates(mahasiswa)
+		if result.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Error when updating the database.",
+				"error":   result.Error.Error(),
+			})
+			return
+		}
+
+		if result = db.Where("id = ?", id).Take(&mahasiswa); result.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Error when querying the database.",
+				"error":   result.Error.Error(),
+			})
+			return
+		}
+
+		if result.RowsAffected < 1 {
+			c.JSON(http.StatusNotFound, gin.H{
+				"success": false,
+				"message": "mahasiswa not found.",
+			})
+			return
+		}
+		c.JSON(http.StatusCreated, gin.H{
+			"success": true,
+			"message": "successfully updated data.",
+			"data":    mahasiswa,
+		})
+	})
+
+	r.PATCH("/password", Auth.Authorization(), func(c *gin.Context) {
+		id, _ := c.Get("id")
+
+		var body Model.ChangePassword
+
+		if err := c.BindJSON(&body); err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"success": false,
+				"message": "body is invalid",
+				"error":   err.Error(),
+			})
+			return
+		}
+
+		user := Model.User{}
+
+		compare := body.Newpass1 == body.Newpass2
+
+		if compare {
+			user = Model.User{
+				Password: hash(body.Newpass1),
+			}
+
+			result := db.Where("id = ? ", id).Model(&user).Updates(&user)
+
+			if result.Error != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"success": false,
+					"message": "Error when updating the database.",
+					"error":   result.Error.Error(),
+				})
+				return
+			}
+
+			if result = db.Where("id = ? ", id).Take(&user); result.Error != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"success": false,
+					"message": "Error when querying the database.",
+					"error":   result.Error.Error(),
+				})
+				return
+			}
+
+			if result.RowsAffected < 1 {
+				c.JSON(http.StatusNotFound, gin.H{
+					"success": false,
+					"message": "user not found.",
+				})
+				return
+			}
+
+			c.JSON(http.StatusCreated, gin.H{
+				"success":  true,
+				"message":  "password berhasil diperbarui",
+				"password": user.Password,
+				"data":     user.Name,
+			})
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"success": false,
+				"message": "Password yang baru keduanya tidak sama.",
+			})
+			return
+		}
+	})
+
 }
