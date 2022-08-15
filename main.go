@@ -19,6 +19,7 @@ func main() {
 
 	//Database
 	db := Database.Open()
+
 	if db != nil {
 		println("Nice, DB Connected")
 	}
@@ -57,6 +58,13 @@ func main() {
 	r.Group("/api")
 	Controller.Register(db, r)
 	Controller.User(db, r)
+	Controller.Admin(db, r)
+	Controller.Task(db, r)
+	Controller.PenugasanAdmin(db, r)
+	Controller.BeritaAdmin(db, r)
+	Controller.BeritaUser(db, r)
+	Controller.TaskUser(db, r)
+	Controller.PenugasanUser(db, r)
 
 	//Server init
 	if err := r.Run(":5000"); err != nil {

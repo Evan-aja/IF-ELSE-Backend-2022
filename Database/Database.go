@@ -31,7 +31,7 @@ func Open() *gorm.DB {
 	}
 
 	// Model
-	if err = db.AutoMigrate(&Model.Agenda{}, &Model.Attendance{}, &Model.Graduation{}, &Model.GroupCompanions{}, &Model.Marking{}, &Model.News{}, &Model.Pendataan{}, &Model.Perizinan{}, &Model.Permission{}, &Model.QuizQuestion{}, &Model.Quizs{}, &Model.PasswordReset{}, &Model.Student{}, &Model.StudentAnswer{}, &Model.StudentAttendance{}, &Model.StudentPerizinan{}, &Model.StudentQuiz{}, &Model.StudentTask{}, &Model.Task{}, &Model.User{}); err != nil {
+	if err = db.AutoMigrate(&Model.Agenda{}, &Model.Attendance{}, &Model.Graduation{}, &Model.GroupCompanions{}, &Model.Marking{}, &Model.News{}, &Model.Pendataan{}, &Model.Perizinan{}, &Model.Permission{}, &Model.QuizQuestion{}, &Model.Quizs{}, &Model.PasswordReset{}, &Model.Student{}, &Model.StudentAnswer{}, &Model.StudentAttendance{}, &Model.StudentPerizinan{}, &Model.StudentQuiz{}, &Model.StudentTask{}, &Model.Task{}, &Model.User{}, &Model.Penugasan{}, &Model.Berita{}, &Model.Link{}); err != nil {
 		log.Fatal(err.Error())
 	}
 	return db
