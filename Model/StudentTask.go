@@ -1,15 +1,14 @@
 package Model
 
 import (
+	"gorm.io/datatypes"
 	"time"
 )
 
 type StudentTask struct {
-	ID             uint `gorm:"primaryKey" json:"id"`
-	TaskID		   uint
-	StudentID      uint `json:"student_id"`
-	SubmissionLink string `json:"submission_link"`
-	CreatedAt      time.Time 
-	SubmittedAt    time.Time `json:"submitted_at"`
-	Status         bool `json:"status"`
+	ID          uint           `gorm:"primaryKey" json:"id"`
+	TaskId      int32          `gorm:"notNull" json:"task_id"`
+	StudentId   int32          `gorm:"notNull" json:"student_id_id"`
+	Submission  datatypes.JSON `gorm:"notNull" json:"submission"`
+	SubmittedAt time.Time      `gorm:"default:current_timestamp;notNull" json:"submitted_at"`
 }
