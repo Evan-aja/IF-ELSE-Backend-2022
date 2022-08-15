@@ -57,7 +57,6 @@ func User(db *gorm.DB, q *gin.Engine) {
 			Line:     body.Line,
 			Whatsapp: body.Whatsapp,
 			About:    body.About,
-			Avatar:   body.Avatar,
 		}
 
 		result := db.Where("id = ?", id).Model(&mahasiswa).Updates(mahasiswa)
@@ -114,6 +113,7 @@ func User(db *gorm.DB, q *gin.Engine) {
 		if compare {
 			user = Model.User{
 				Password: hash(body.Newpass1),
+				ID: user.ID,
 			}
 
 			result := db.Where("id = ? ", id).Model(&user).Updates(&user)
@@ -147,7 +147,6 @@ func User(db *gorm.DB, q *gin.Engine) {
 			c.JSON(http.StatusCreated, gin.H{
 				"success":  true,
 				"message":  "password berhasil diperbarui",
-				"password": user.Password,
 				"data":     user.Name,
 			})
 		} else {
