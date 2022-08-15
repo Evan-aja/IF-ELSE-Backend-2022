@@ -1,6 +1,7 @@
 package main
 
 import (
+	"ifelse/Controller"
 	"ifelse/Database"
 	"log"
 	"net/http"
@@ -17,7 +18,8 @@ func main() {
 	}
 
 	//Database
-	if db := Database.Open(); db != nil {
+	db := Database.Open()
+	if db != nil {
 		println("Nice, DB Connected")
 	}
 
@@ -52,6 +54,10 @@ func main() {
 			"success": true,
 		})
 	})
+	r.Group("/api")
+	Controller.Register(db, r)
+	Controller.User(db, r)
+	Controller.Admin(db, r)
 
 	//Server init
 	if err := r.Run(":5000"); err != nil {
