@@ -16,8 +16,6 @@ func AdminGroup(db *gorm.DB, q *gin.Engine) {
 	r := q.Group("/api")
 
 	// Group Routers
-	r.Static("/images", "./images")
-
 	type Group struct {
 		ID            uint   `json:"id"`
 		CompanionName string `json:"companion_name"`
@@ -51,6 +49,7 @@ func AdminGroup(db *gorm.DB, q *gin.Engine) {
 			"data":    ret,
 		})
 	})
+	r.Static("/admin/image", "./Images")
 
 	// untuk menambah grup baru di admin page
 	r.POST("/admin/group", func(c *gin.Context) {
@@ -74,7 +73,7 @@ func AdminGroup(db *gorm.DB, q *gin.Engine) {
 		})
 		file.Filename = string(shuff)
 
-		if err := c.SaveUploadedFile(file, "./images/"+file.Filename); err != nil {
+		if err := c.SaveUploadedFile(file, "./Images/"+file.Filename); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"Success": false,
 				"error":   "upload file err: " + err.Error(),
@@ -88,7 +87,7 @@ func AdminGroup(db *gorm.DB, q *gin.Engine) {
 			LineGroup:     c.PostForm("line_group"),
 			CompanionName: c.PostForm("companion_name"),
 			IDLine:        c.PostForm("id_line"),
-			LinkFoto:      os.Getenv("BASE_URL") + "/api/images/" + file.Filename,
+			LinkFoto:      os.Getenv("BASE_URL") + "/api/admin/image/" + file.Filename,
 		}
 
 		if err := db.Create(&newGroup); err.Error != nil {
