@@ -5,23 +5,41 @@ import (
 	"gorm.io/gorm"
 	"ifelse/Model"
 	"net/http"
+	"strconv"
 )
 
-func Admin(db *gorm.DB, q *gin.Engine) {
+func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 	r := q.Group("/api")
 
 	// untuk menampilkan seluruh data mahasiswa yang tersedia
 	// ditambah fitur search dengan menggunakan nama atau nim
-	r.POST("/mahasiswa", func(c *gin.Context) {
+	r.POST("/admin/mahasiswa", func(c *gin.Context) {
 		name, _ := c.GetQuery("name")
 		nim, _ := c.GetQuery("nim")
 
+		q := c.Request.URL.Query()
+
+		page, _ := strconv.Atoi(q.Get("page"))
+		if page == 0 {
+			page = 1
+		}
+
+		pageSize, _ := strconv.Atoi(q.Get("page_size"))
+		switch {
+		case pageSize > 1:
+			pageSize = 10
+		case pageSize <= 0:
+			pageSize = 10
+		}
+
+		offset := (page - 1) * pageSize
+
 		var queryResults []Model.Student
 
-		if res := db.Where("name LIKE ?", "%"+name+"%").Where("nim LIKE ?", "%"+nim).Find(&queryResults); res.Error != nil {
+		if res := db.Where("name LIKE ?", "%"+name+"%").Where("nim LIKE ?", "%"+nim).Offset(offset).Limit(pageSize).Find(&queryResults); res.Error != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"success": false,
-				"message": "Query is not supplied.",
+				"message": "students is not found.",
 				"error":   res.Error.Error(),
 			})
 			return
@@ -42,19 +60,19 @@ func Admin(db *gorm.DB, q *gin.Engine) {
 	})
 
 	// untuk menampilkan data mahasiswa berdasarkan id yang diminta
-	r.GET("/mahasiswa/:id", func(c *gin.Context) {
+	r.GET("/admin/mahasiswa/:id", func(c *gin.Context) {
 		id, isIdExists := c.Params.Get("id")
 		if !isIdExists {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"Success": false,
-				"message": "user_id is not available",
+				"message": "id is not available",
 			})
 			return
 		}
 
 		mahasiswa := Model.Student{}
 
-		if result := db.Where("id = ?", id).Take(&mahasiswa); result.Error != nil {
+		if result := db.Where("id = ?", id).Preload("StudentTask").Take(&mahasiswa); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
 				"message": "Error when querying the database.",
@@ -63,35 +81,30 @@ func Admin(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		c.JSON(http.StatusOK, gin.H{
-			"success": true,
-			"message": "query completed.",
-			"data":    mahasiswa,
-		})
+		data := Model.Group{}
 
-	})
-
-	// untuk menampilkan data mahasiswa yang memiliki `group_id` yang sama
-	r.GET("/mahasiswa/group/:id", func(c *gin.Context) {
-		id, isIdExists := c.Params.Get("id")
-		if !isIdExists {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"Success": false,
-				"message": "group_id is not available",
-			})
-			return
-		}
-
-		var mahasiswa []Model.Student
-
-		if result := db.Where("group_id = ?", id).Find(&mahasiswa); result.Error != nil {
+		if group := db.Where("id = ?", mahasiswa.GroupID).Take(&data); group.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
 				"message": "Error when querying the database.",
-				"error":   result.Error.Error(),
+				"error":   group.Error.Error(),
 			})
 			return
 		}
+
+		mark := []Model.StudentMarking{}
+
+		if rang := db.Where("student_id = ?", mahasiswa.ID).Find(&mark); rang.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Error when querying the database.",
+				"error":   rang.Error.Error(),
+			})
+			return
+		}
+
+		mahasiswa.GroupName = data.GroupName
+		mahasiswa.StudentMarking = mark
 
 		c.JSON(http.StatusOK, gin.H{
 			"success": true,
@@ -102,7 +115,7 @@ func Admin(db *gorm.DB, q *gin.Engine) {
 	})
 
 	// untuk memperbarui data `group_id` mahasiswa
-	r.PATCH("/mahasiswa/group/:id", func(c *gin.Context) {
+	r.PATCH("/admin/mahasiswa/:id", func(c *gin.Context) {
 		id, _ := c.Params.Get("id")
 
 		var body Model.Student
@@ -117,7 +130,7 @@ func Admin(db *gorm.DB, q *gin.Engine) {
 		}
 
 		mahasiswa := Model.Student{
-			GroupId: body.GroupId,
+			GroupID: body.GroupID,
 		}
 		result := db.Where("id = ?", id).Updates(mahasiswa)
 		if result.Error != nil {
@@ -152,4 +165,38 @@ func Admin(db *gorm.DB, q *gin.Engine) {
 		})
 	})
 
+	// Menghapus mahasiswa berdasrkan ID yang dimiliki
+	r.DELETE("/mahasiswa/:id", func(c *gin.Context) {
+		id, isIdExists := c.Params.Get("id")
+		if !isIdExists {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"success": false,
+				"message": "ID is not supplied.",
+			})
+			return
+		}
+		parsedId, err := strconv.ParseUint(id, 10, 64)
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"success": false,
+				"message": "ID is invalid.",
+			})
+			return
+		}
+		student := Model.Student{
+			ID: uint(parsedId),
+		}
+		if result := db.Delete(&student); result.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Error when deleting from the database.",
+				"error":   result.Error.Error(),
+			})
+			return
+		}
+		c.JSON(http.StatusOK, gin.H{
+			"success": true,
+			"message": "Delete successful.",
+		})
+	})
 }

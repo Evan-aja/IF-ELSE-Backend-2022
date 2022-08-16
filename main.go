@@ -57,7 +57,7 @@ func main() {
 	r.Group("/api")
 	Controller.Register(db, r)
 	Controller.User(db, r)
-	Controller.Admin(db, r)
+	Controller.AdminMahasiswa(db, r)
 
 	//Server init
 	if err := r.Run(":5000"); err != nil {
