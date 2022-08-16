@@ -14,7 +14,7 @@ import (
 
 func AdminAgenda(db *gorm.DB, q *gin.Engine) {
 	r := q.Group("/api")
-	r.Static("/images", "./images")
+	r.Static("/agenda/image", "./Images")
 	r.POST("/admin/agenda", func(c *gin.Context) {
 		image, err := c.FormFile("image")
 		if err != nil {
@@ -38,7 +38,7 @@ func AdminAgenda(db *gorm.DB, q *gin.Engine) {
 
 		godotenv.Load("../.env")
 
-		if err := c.SaveUploadedFile(image, "./images/"+image.Filename); err != nil {
+		if err := c.SaveUploadedFile(image, "./Images/"+image.Filename); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"Success": false,
 				"error":   "upload file err: " + err.Error(),
@@ -49,7 +49,7 @@ func AdminAgenda(db *gorm.DB, q *gin.Engine) {
 		newAgenda := Model.Agenda{
 			Title:            c.PostForm("title"),
 			Content:          c.PostForm("content"),
-			Image:            os.Getenv("BASE_URL") + "/api/images/" + image.Filename,
+			Image:            os.Getenv("BASE_URL") + "/api/agenda/image/" + image.Filename,
 			StartAt:          c.PostForm("start_at"),
 			EndAt:            c.PostForm("end_at"),
 			PerizinanStartAt: c.PostForm("perizinan_start_at"),
