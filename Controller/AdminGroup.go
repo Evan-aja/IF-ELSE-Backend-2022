@@ -118,7 +118,7 @@ func AdminGroup(db *gorm.DB, q *gin.Engine) {
 		if !isIdExists {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"Success": false,
-				"message": "group_id is not available",
+				"message": "group is not available",
 			})
 			return
 		}
