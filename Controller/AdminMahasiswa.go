@@ -83,7 +83,7 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 
 		data := Model.Group{}
 
-		if group := db.Where("id = ?", mahasiswa.GroupID).Take(&data); group.Error != nil {
+		if group := db.Where("id = ?", mahasiswa.GroupID).Preload("Student").Take(&data); group.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
 				"message": "Error when querying the database.",
@@ -92,7 +92,7 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		mark := []Model.StudentMarking{}
+		var mark []Model.StudentMarking
 
 		if rang := db.Where("student_id = ?", mahasiswa.ID).Find(&mark); rang.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
@@ -102,8 +102,6 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 			})
 			return
 		}
-
-		mahasiswa.GroupName = data.GroupName
 		mahasiswa.StudentMarking = mark
 
 		c.JSON(http.StatusOK, gin.H{

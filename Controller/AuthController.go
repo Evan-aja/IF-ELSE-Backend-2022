@@ -28,14 +28,13 @@ func Register(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 		regist := Model.Student{
-			Name:    input.Name,
 			NIM:     input.NIM,
 			Address: input.Address,
 		}
 		if err := db.Create(&regist); err.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
-				"message": "Something went wrong with user creation",
+				"message": "Something went wrong with student creation",
 				"error":   err.Error.Error(),
 			})
 			return

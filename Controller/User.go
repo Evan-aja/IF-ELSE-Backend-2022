@@ -23,6 +23,14 @@ func User(db *gorm.DB, q *gin.Engine) {
 			})
 			return
 		}
+		//if user.RoleId < 4 {
+		//	c.JSON(http.StatusForbidden, gin.H {
+		//		"success": false,
+		//		"message": "unauthorized access",
+		//		"error": nil,
+		//	})
+		//	return
+		//}
 		c.JSON(http.StatusOK, gin.H{
 			"success": true,
 			"error":   nil,
