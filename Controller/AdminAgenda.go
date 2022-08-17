@@ -146,7 +146,7 @@ func AdminAgenda(db *gorm.DB, q *gin.Engine) {
 			IsPublished:      b1,
 		}
 
-		if err := db.Where("id = ?", id).Model(&newAgenda).Updates(newAgenda); err.Error != nil {
+		if err := db.Where("id = ?", id).Model(&newAgenda).Select("*").Updates(newAgenda); err.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
 				"message": "error when inserting a new agenda",

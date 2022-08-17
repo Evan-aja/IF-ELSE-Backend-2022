@@ -60,6 +60,8 @@ func main() {
 	Controller.AdminMahasiswa(db, r)
 	Controller.AdminGroup(db, r)
 	Controller.AdminAgenda(db, r)
+	Controller.AdminNews(db, r)
+	Controller.UserNews(db, r)
 
 	//Server init
 	if err := r.Run(":5000"); err != nil {
