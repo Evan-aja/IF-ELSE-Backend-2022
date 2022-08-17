@@ -54,7 +54,8 @@ func Open() *gorm.DB {
 		&Model.StudentQuiz{},
 		&Model.StudentTask{},
 		&Model.Task{},
-		&Model.StudentMarking{}); err != nil {
+		&Model.StudentMarking{},
+		&Model.Links{}); err != nil {
 		log.Fatal(err.Error())
 	}
 	return db

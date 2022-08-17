@@ -62,6 +62,7 @@ func main() {
 	Controller.AdminAgenda(db, r)
 	Controller.AdminNews(db, r)
 	Controller.UserNews(db, r)
+	Controller.AdminTask(db, r)
 
 	//Server init
 	if err := r.Run(":5000"); err != nil {

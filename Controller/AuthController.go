@@ -44,7 +44,7 @@ func Register(db *gorm.DB, q *gin.Engine) {
 			Username:  input.Username,
 			Email:     input.Email,
 			Password:  hash(input.Password),
-			StudentId: regist.ID,
+			StudentID: regist.ID,
 		}
 		if err := db.Create(&regist2); err.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{

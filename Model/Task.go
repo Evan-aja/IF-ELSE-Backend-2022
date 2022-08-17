@@ -4,11 +4,29 @@ import "time"
 
 type Task struct {
 	ID          uint      `gorm:"primaryKey" json:"id"`
-	Title       string    `gorm:"size:255;null" json:"title"`
-	Description string    `gorm:"type:text;null" json:"description"`
-	IsPublished bool      `gorm:"default:false;notNull" json:"is_published"`
-	Fields      string    `gorm:"type:longtext;notNull" json:"fields"`
-	AgendaId    int32     `gorm:"default:1;notNull" json:"agenda_id"`
-	StartAt     time.Time `gorm:"null" json:"start_at"`
-	EndAt       time.Time `gorm:"null" json:"end_at"`
+	Title       string    `gorm:"size:255;notNull" json:"title"`
+	Description string    `gorm:"type:longtext;notNull" json:"description"`
+	Condition   string    `gorm:"type:text;notNull" json:"condition"`
+	Step        string    `gorm:"type:text;notNull" json:"step"`
+	JumlahLink  int32     `json:"jumlah_link"`
+	Deadline    time.Time `json:"deadline"`
+}
+
+type Links struct {
+	ID     uint   `gorm:"primaryKey" json:"id"`
+	TaskID uint   `json:"task_id"`
+	Title  string `gorm:"notNull" json:"title"`
+	Task   Task   `gorm:"foreignKey:TaskID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Link   string `gorm:"size:255" json:"link"`
+}
+
+type NewTask struct {
+	ID          uint      `json:"id"`
+	Title       string    `json:"title"`
+	Description string    `json:"description"`
+	Condition   string    `json:"condition"`
+	Step        string    `json:"step"`
+	JumlahLink  int32     `json:"jumlah_link"`
+	Deadline    time.Time `json:"deadline"`
+	Links 		[]string  `json:"links"`
 }
