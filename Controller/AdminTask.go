@@ -1,6 +1,7 @@
 package Controller
 
 import (
+	"fmt"
 	"ifelse/Model"
 	"net/http"
 
@@ -44,8 +45,9 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 		id := c.Param("id")
 
 		if err := db.Where("id = ?", id).First(&penugasan).Error; err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"message": err.Error(),
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error":   err.Error(),
+				"message": "Something went wrong on server side",
 				"success": false,
 			})
 			return
@@ -53,24 +55,27 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 
 		if penugasan.Title == "" {
 			c.JSON(http.StatusOK, gin.H{
-				"data":    penugasan,
-				"Error":   "Data Is Empty",
+				"message": penugasan,
+				"error":   "Data Is Empty",
 				"success": false,
 			})
 			return
 		}
 
 		c.JSON(http.StatusOK, gin.H{
-			"data":    penugasan,
+			"message": penugasan,
 			"success": true,
+			"error":   nil,
 		})
 	})
 
 	// Create Penugasan
 	r.POST("/admin/new-task", func(c *gin.Context) {
+		var ntask Model.NewTask
 		var task Model.Task
+		var link Model.Links
 
-		if err := c.BindJSON(&task); err != nil {
+		if err := c.BindJSON(&ntask); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"error":   err.Error(),
 				"success": false,
@@ -79,7 +84,7 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		if task.Title == "" || task.Description == "" || task.Condition == "" || task.Step == "" {
+		if ntask.Title == "" || ntask.Description == "" || ntask.Condition == "" || ntask.Step == "" || ntask.Links == nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"message": "All field bust be filled",
 				"success": false,
@@ -96,48 +101,66 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 			})
 		}
 
+		task = Model.Task{
+			Title:       ntask.Title,
+			Description: ntask.Description,
+			Condition:   ntask.Condition,
+			Step:        ntask.Step,
+			JumlahLink:  ntask.JumlahLink,
+			Deadline:    ntask.Deadline,
+		}
+		// buat task baru
 		if err := db.Create(&task).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"message": "can't created task",
 				"success": false,
-				"error": err.Error(),
+				"error":   err.Error(),
 			})
 			return
 		}
 
-		// studentTask := Model.StudentTask{
-		// 	TaskID: task.ID,
-		// }
-		// for i := 0; i < len(student); i++ {
-		// 	// fmt.Println(student[i])
-		// 	// fmt.Println(student[i].ID)
-		// 	for j := 0; j < int(task.JumlahLink); j++ {
-		// 		studentTask.StudentID = student[i].ID
-		// 		// fmt.Println(student[i].ID)
-		// 		fmt.Println(studentTask)
-		// 		studentTask.ID = 0
-		// 		if err := db.Create(&studentTask).Error; err != nil {
-		// 			c.JSON(http.StatusInternalServerError, gin.H{
-		// 				"message": "can't create links",
-		// 				"success": false,
-		// 				"error":  err.Error(),
-		// 			})
-		// 			return
-		// 		}
-			
-		// 	}
-		// }
-		task = Model.Task{
-			Title:       task.Title,
-			Description: task.Description,
-			Condition:   task.Condition,
-			Step:        task.Step,
-			JumlahLink:  task.JumlahLink,
-			Deadline:    task.Deadline,
+		link = Model.Links{
+			TaskID: task.ID,
+		}
+		// buat link yang di dalam task
+		var linkId []uint
+		for i := 0; i < len(ntask.Links); i++ {
+			link.Title = ntask.Links[i]
+			link.ID = 0
+			if err := db.Create(&link); err.Error != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"message": "can't create links",
+					"success": false,
+					"error":   err.Error.Error(),
+				})
+				return
+			}
+			linkId = append(linkId, link.ID)
+		}
+
+		studentTask := Model.StudentTask{
+			TaskID: task.ID,
+		}
+		// assign link ke siswa
+		for i := 0; i < len(student); i++ {
+			for j := 0; j < int(task.JumlahLink); j++ {
+				studentTask.StudentID = student[i].ID
+				studentTask.LinkID = linkId[j]
+				fmt.Println(studentTask)
+				studentTask.ID = 0
+				if err := db.Create(&studentTask).Error; err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{
+						"message": "can't create links",
+						"success": false,
+						"error":   err.Error(),
+					})
+					return
+				}
+			}
 		}
 
 		c.JSON(http.StatusOK, gin.H{
-			"data":    task,
+			"data":    ntask,
 			"success": true,
 		})
 	})
