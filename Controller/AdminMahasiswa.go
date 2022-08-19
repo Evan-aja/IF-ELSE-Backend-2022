@@ -16,6 +16,26 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 	// untuk menampilkan seluruh data mahasiswa yang tersedia
 	// ditambah fitur search dengan menggunakan nama atau nim
 	r.POST("/admin/mahasiswa", Auth.Authorization(), func(c *gin.Context) {
+		ID, _ := c.Get("id")
+
+		var user Model.User
+		if err := db.Where("id = ?", ID).Take(&user); err.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Something went wrong",
+				"error":   err.Error.Error(),
+			})
+			return
+		}
+
+		if user.RoleId > 3 {
+			c.JSON(http.StatusForbidden, gin.H{
+				"success": false,
+				"message": "unauthorized access :(",
+				"error":   nil,
+			})
+			return
+		}
 		name, _ := c.GetQuery("name")
 		nim, _ := c.GetQuery("nim")
 
@@ -63,6 +83,26 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 
 	// untuk menampilkan data mahasiswa berdasarkan id yang diminta
 	r.GET("/admin/mahasiswa/:id", Auth.Authorization(), func(c *gin.Context) {
+		ID, _ := c.Get("id")
+
+		var user Model.User
+		if err := db.Where("id = ?", ID).Take(&user); err.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Something went wrong",
+				"error":   err.Error.Error(),
+			})
+			return
+		}
+
+		if user.RoleId > 3 {
+			c.JSON(http.StatusForbidden, gin.H{
+				"success": false,
+				"message": "unauthorized access :(",
+				"error":   nil,
+			})
+			return
+		}
 		id, isIdExists := c.Params.Get("id")
 		if !isIdExists {
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -131,8 +171,8 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		x := user.RoleId != 3
-		if x || user.RoleId != 0 {
+
+		if user.RoleId != 0 && user.RoleId != 3 {
 			c.JSON(http.StatusForbidden, gin.H{
 				"success": false,
 				"message": "unauthorized access :(",
@@ -189,7 +229,7 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 		})
 	})
 
-	// Menghapus mahasiswa berdasrkan ID yang dimiliki
+	// Menghapus mahasiswa berdasarkan ID yang dimiliki
 	r.DELETE("/mahasiswa/:id", Auth.Authorization(), func(c *gin.Context) {
 		ID, _ := c.Get("id")
 
@@ -203,8 +243,7 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		x := user.RoleId != 3
-		if x || user.RoleId != 0 {
+		if user.RoleId != 0 && user.RoleId != 3 {
 			c.JSON(http.StatusForbidden, gin.H{
 				"success": false,
 				"message": "unauthorized access :(",
@@ -212,6 +251,7 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 			})
 			return
 		}
+		
 		id, isIdExists := c.Params.Get("id")
 		if !isIdExists {
 			c.JSON(http.StatusBadRequest, gin.H{

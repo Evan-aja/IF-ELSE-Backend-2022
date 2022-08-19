@@ -67,15 +67,15 @@ func AdminGroup(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		x := user.RoleId != 3
-		if x || user.RoleId != 0 {
+		if user.RoleId != 0 && user.RoleId != 3 {
 			c.JSON(http.StatusForbidden, gin.H {
 				"success": false,
 				"message": "unauthorized access :(",
 				"error": nil,
 			})
 			return
-		} 
+		} 	
+
 		file, err := c.FormFile("file")
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -136,6 +136,26 @@ func AdminGroup(db *gorm.DB, q *gin.Engine) {
 
 	// untuk mendapatkan data grup berdasarkan id
 	r.GET("/admin/group/:id", Auth.Authorization(), func(c *gin.Context) {
+		ID, _ := c.Get("id")
+
+		var user Model.User
+		if err := db.Where("id = ?", ID).Take(&user); err.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Something went wrong",
+				"error":   err.Error.Error(),
+			})
+			return
+		}
+
+		if user.RoleId > 3 {
+			c.JSON(http.StatusForbidden, gin.H {
+				"success": false,
+				"message": "unauthorized access :(",
+				"error": nil,
+			})
+			return
+		} 	
 		id, isIdExists := c.Params.Get("id")
 		if !isIdExists {
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -177,8 +197,8 @@ func AdminGroup(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		x := user.RoleId != 3
-		if x || user.RoleId != 0 {
+		
+		if user.RoleId != 3 && user.RoleId != 0 {
 			c.JSON(http.StatusForbidden, gin.H {
 				"success": false,
 				"message": "unauthorized access :(",
@@ -229,7 +249,7 @@ func AdminGroup(db *gorm.DB, q *gin.Engine) {
 			LineGroup:     c.PostForm("line_group"),
 			CompanionName: c.PostForm("companion_name"),
 			IDLine:        c.PostForm("id_line"),
-			LinkFoto:      os.Getenv("BASE_URL") + "api/images/" + file.Filename,
+			LinkFoto:      os.Getenv("BASE_URL") + "/api/admin/image/" + file.Filename,
 		}
 
 		result := db.Where("id = ?", id).Model(&newGroup).Updates(newGroup)
@@ -279,15 +299,15 @@ func AdminGroup(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		x := user.RoleId != 3
-		if x || user.RoleId != 0 {
+		if user.RoleId != 3 && user.RoleId != 0 {
 			c.JSON(http.StatusForbidden, gin.H {
 				"success": false,
 				"message": "unauthorized access :(",
 				"error": nil,
 			})
 			return
-		} 
+		} 	
+
 		id, isIdExists := c.Params.Get("id")
 		if !isIdExists {
 			c.JSON(http.StatusBadRequest, gin.H{

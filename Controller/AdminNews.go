@@ -37,15 +37,14 @@ func AdminNews(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		x := user.RoleId != 0
-		if x || user.RoleId != 2 {
+		if user.RoleId != 2 && user.RoleId != 0 {
 			c.JSON(http.StatusForbidden, gin.H {
 				"success": false,
 				"message": "unauthorized access :(",
 				"error": nil,
 			})
 			return
-		} 
+		} 	
 		file, err := c.FormFile("image")
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -101,6 +100,26 @@ func AdminNews(db *gorm.DB, q *gin.Engine) {
 
 	// untuk mendapatkan seluruh data news
 	r.GET("/admin/news", Auth.Authorization(), func(c *gin.Context) {
+		ID, _ := c.Get("id")
+
+		var user Model.User
+		if err := db.Where("id = ?", ID).Take(&user); err.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Something went wrong",
+				"error":   err.Error.Error(),
+			})
+			return
+		}
+
+		if user.RoleId > 3 {
+			c.JSON(http.StatusForbidden, gin.H {
+				"success": false,
+				"message": "unauthorized access :(",
+				"error": nil,
+			})
+			return
+		} 	
 		var news []Model.News
 
 		if result := db.Find(&news); result.Error != nil {
@@ -130,6 +149,27 @@ func AdminNews(db *gorm.DB, q *gin.Engine) {
 
 	// untuk mendapatkan detail news dari id
 	r.GET("/admin/news-detail/:id", Auth.Authorization(), func(c *gin.Context) {
+		ID, _ := c.Get("id")
+
+		var user Model.User
+		if err := db.Where("id = ?", ID).Take(&user); err.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Something went wrong",
+				"error":   err.Error.Error(),
+			})
+			return
+		}
+
+		if user.RoleId > 3 {
+			c.JSON(http.StatusForbidden, gin.H {
+				"success": false,
+				"message": "unauthorized access :(",
+				"error": nil,
+			})
+			return
+		} 	
+
 		id, isIdExists := c.Params.Get("id")
 		if !isIdExists {
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -172,8 +212,7 @@ func AdminNews(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		x := user.RoleId != 0
-		if x || user.RoleId != 2 {
+		if user.RoleId != 0 && user.RoleId != 2 {
 			c.JSON(http.StatusForbidden, gin.H {
 				"success": false,
 				"message": "unauthorized access :(",
@@ -181,6 +220,7 @@ func AdminNews(db *gorm.DB, q *gin.Engine) {
 			})
 			return
 		} 
+		
 		id, isIdExists := c.Params.Get("id")
 		if !isIdExists {
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -278,8 +318,7 @@ func AdminNews(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		x := user.RoleId != 0
-		if x || user.RoleId != 2 {
+		if user.RoleId != 0 && user.RoleId != 2 {
 			c.JSON(http.StatusForbidden, gin.H {
 				"success": false,
 				"message": "unauthorized access :(",
@@ -287,6 +326,7 @@ func AdminNews(db *gorm.DB, q *gin.Engine) {
 			})
 			return
 		} 
+		
 		id, isIdExists := c.Params.Get("id")
 		if !isIdExists {
 			c.JSON(http.StatusBadRequest, gin.H{

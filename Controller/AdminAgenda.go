@@ -39,15 +39,14 @@ func AdminAgenda(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		x := user.RoleId != 2
-		if x || user.RoleId != 0 {
-			c.JSON(http.StatusForbidden, gin.H {
+		if user.RoleId != 0 && user.RoleId != 2 {
+			c.JSON(http.StatusForbidden, gin.H{
 				"success": false,
 				"message": "unauthorized access :(",
-				"error": nil,
+				"error":   nil,
 			})
 			return
-		} 
+		}
 		image, err := c.FormFile("image")
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -142,6 +141,26 @@ func AdminAgenda(db *gorm.DB, q *gin.Engine) {
 
 	// get all agenda
 	r.GET("/admin/agenda", Auth.Authorization(),func(c *gin.Context) {
+		ID, _ := c.Get("id")
+
+		var user Model.User
+		if err := db.Where("id = ?", ID).Take(&user); err.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Something went wrong",
+				"error":   err.Error.Error(),
+			})
+			return
+		}
+
+		if user.RoleId > 3 {
+			c.JSON(http.StatusForbidden, gin.H{
+				"success": false,
+				"message": "unauthorized access :(",
+				"error":   nil,
+			})
+			return
+		}
 		var agenda []Model.Agenda
 		if result := db.Find(&agenda); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
@@ -170,6 +189,26 @@ func AdminAgenda(db *gorm.DB, q *gin.Engine) {
 
 	// untuk mendapatkan detail agenda dari id
 	r.GET("/admin/agenda/:id", Auth.Authorization(), func(c *gin.Context) {
+		ID, _ := c.Get("id")
+
+		var user Model.User
+		if err := db.Where("id = ?", ID).Take(&user); err.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Something went wrong",
+				"error":   err.Error.Error(),
+			})
+			return
+		}
+
+		if user.RoleId > 3 {
+			c.JSON(http.StatusForbidden, gin.H{
+				"success": false,
+				"message": "unauthorized access :(",
+				"error":   nil,
+			})
+			return
+		}
 		id, isIdExists := c.Params.Get("id")
 		if !isIdExists {
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -213,8 +252,7 @@ func AdminAgenda(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		x := user.RoleId != 2
-		if x || user.RoleId != 0 {
+		if user.RoleId != 0 && user.RoleId != 2 {
 			c.JSON(http.StatusForbidden, gin.H {
 				"success": false,
 				"message": "unauthorized access :(",
@@ -300,15 +338,14 @@ func AdminAgenda(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		x := user.RoleId != 2
-		if x || user.RoleId != 0 {
+		if user.RoleId != 0 && user.RoleId != 2 {
 			c.JSON(http.StatusForbidden, gin.H {
 				"success": false,
 				"message": "unauthorized access :(",
 				"error": nil,
 			})
 			return
-		} 
+		} 	
 		id, _ := c.Params.Get("id")
 
 		parsedId, _ := strconv.ParseUint(id, 10, 32)
@@ -351,15 +388,15 @@ func AdminAgenda(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		x := user.RoleId != 2
-		if x || user.RoleId != 0 {
+		if user.RoleId != 0 && user.RoleId != 2 {
 			c.JSON(http.StatusForbidden, gin.H {
 				"success": false,
 				"message": "unauthorized access :(",
 				"error": nil,
 			})
 			return
-		} 
+		} 	
+		
 		id, isIdExists := c.Params.Get("id")
 		if !isIdExists {
 			c.JSON(http.StatusBadRequest, gin.H{

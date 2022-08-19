@@ -46,8 +46,6 @@ func AdminMarking(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		// ID, _ := strconv.ParseUint(id, 10, 64)
-
 		marking := Model.Marking{
 			Mark: body.Mark,
 		}
