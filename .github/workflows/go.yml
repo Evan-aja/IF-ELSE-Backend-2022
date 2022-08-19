@@ -31,16 +31,10 @@ jobs:
       run: go get
       
     - name: Build
-      run: go build -v
+      run: go build -v ./...
       
     - name: Make .env
       run: printf "DB_USER=root\nDB_PASS=123\nDB_HOST=localhost:3306\nDB_NAME=ifelsedb\nGIN_MODE=debug\nTOKEN_G=asd123\nBASE_URL=localhost\nPROXY_1=localhost\n" > .env
-    
-    - name: Install timelimit
-      run: sudo apt update && sudo apt install timelimit -y
       
-    - name: Run ifelse program
-      run: timelimit -t8 -T10 -s15 ./ifelse
-      
-    - name: Remove ifelse binary
-      run: rm ./ifelse
+    - name: Test ifelse program
+      run: go test -v ./...
