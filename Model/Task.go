@@ -1,7 +1,5 @@
 package Model
 
-import "time"
-
 type Task struct {
 	ID          uint      `gorm:"primaryKey" json:"id"`
 	Title       string    `gorm:"size:255;notNull" json:"title"`
@@ -9,14 +7,15 @@ type Task struct {
 	Condition   string    `gorm:"type:text;notNull" json:"condition"`
 	Step        string    `gorm:"type:text;notNull" json:"step"`
 	JumlahLink  int32     `json:"jumlah_link"`
-	Deadline    time.Time `json:"deadline"`
+	Deadline    string `json:"deadline"`
+	Links []Links
 }
 
 type Links struct {
 	ID     uint   `gorm:"primaryKey" json:"id"`
 	TaskID uint   `json:"task_id"`
 	Title  string `gorm:"notNull" json:"title"`
-	Task   Task   `gorm:"foreignKey:TaskID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	// Task   Task   `gorm:"foreignKey:TaskID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
 	Link   string `gorm:"size:255" json:"link"`
 }
 
@@ -27,6 +26,6 @@ type NewTask struct {
 	Condition   string    `json:"condition"`
 	Step        string    `json:"step"`
 	JumlahLink  int32     `json:"jumlah_link"`
-	Deadline    time.Time `json:"deadline"`
+	Deadline    string `json:"deadline"`
 	Links 		[]string  `json:"links"`
 }

@@ -36,7 +36,7 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 
 		var queryResults []Model.Student
 
-		if res := db.Where("name LIKE ?", "%"+name+"%").Where("nim LIKE ?", "%"+nim).Offset(offset).Limit(pageSize).Find(&queryResults); res.Error != nil {
+		if res := db.Where("nickname LIKE ?", "%"+name+"%").Where("nim LIKE ?", "%"+nim+"%").Offset(offset).Limit(pageSize).Find(&queryResults); res.Error != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"success": false,
 				"message": "students is not found.",
@@ -70,9 +70,9 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		mahasiswa := Model.Student{}
+		var mahasiswa Model.Student
 
-		if result := db.Where("id = ?", id).Preload("StudentTask").Take(&mahasiswa); result.Error != nil {
+		if result := db.Where("id = ?", id).Take(&mahasiswa); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
 				"message": "Error when querying the database.",
@@ -81,28 +81,76 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		data := Model.Group{}
+		stask := []Model.StudentTask{}
+		// link := []Model.Links{}
 
-		if group := db.Where("id = ?", mahasiswa.GroupID).Preload("Student").Take(&data); group.Error != nil {
+		// preload task, mahasiswa, dan links
+		if result := db.Where("student_id = ?", id).Preload("Task").Preload("Student").Find(&stask); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
 				"message": "Error when querying the database.",
-				"error":   group.Error.Error(),
+				"error":   result.Error.Error(),
 			})
 			return
 		}
 
-		var mark []Model.StudentMarking
+		smark := []Model.Marking{}
 
-		if rang := db.Where("student_id = ?", mahasiswa.ID).Find(&mark); rang.Error != nil {
+		if result := db.Where("student_id = ?", id).Find(&smark); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
 				"message": "Error when querying the database.",
-				"error":   rang.Error.Error(),
+				"error":   result.Error.Error(),
 			})
 			return
 		}
-		mahasiswa.StudentMarking = mark
+
+		// var link Model.Links 
+
+		// if res := db.Where("task_id = ?", id).Find(&link); res.Error != nil {
+		// 	c.JSON(http.StatusInternalServerError, gin.H{
+		// 		"success": false,
+		// 		"message": "Error when querying the database.",
+		// 		"error":   res.Error.Error(),
+		// 	})
+		// 	return
+		// }
+
+
+		
+		// if result := db.Where("task_id = ?", stask.ID).Find(&link); result.Error != nil {
+		// 	c.JSON(http.StatusInternalServerError, gin.H{
+		// 		"success": false,
+		// 		"message": "Error when querying the database.",
+		// 		"error":   result.Error.Error(),
+		// 	})
+		// 	return
+		// }
+		// data := Model.Group{}
+
+		// if group := db.Where("id = ?", mahasiswa.GroupID).Preload("Student").Take(&data); group.Error != nil {
+		// 	c.JSON(http.StatusInternalServerError, gin.H{
+		// 		"success": false,
+		// 		"message": "Error when querying the database.",
+		// 		"error":   group.Error.Error(),
+		// 	})
+		// 	return
+		// }
+
+		// var mark []Model.StudentMarking
+
+		// if rang := db.Where("student_id = ?", mahasiswa.ID).Find(&mark); rang.Error != nil {
+		// 	c.JSON(http.StatusInternalServerError, gin.H{
+		// 		"success": false,
+		// 		"message": "Error when querying the database.",
+		// 		"error":   rang.Error.Error(),
+		// 	})
+		// 	return
+		// }
+		// stask.Links = link[0]
+		mahasiswa.StudentTask = stask
+		mahasiswa.Marking = smark
+		// mahasiswa.StudentMarking = mark
 
 		c.JSON(http.StatusOK, gin.H{
 			"success": true,

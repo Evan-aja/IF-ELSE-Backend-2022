@@ -1,6 +1,7 @@
 package Controller
 
 import (
+	"fmt"
 	"ifelse/Model"
 	"math/rand"
 	"net/http"
@@ -16,6 +17,12 @@ import (
 func AdminAgenda(db *gorm.DB, q *gin.Engine) {
 	r := q.Group("/api")
 	r.Static("/agenda/image", "./Images")
+	type Agenda struct {
+		ID      uint   `json:"id"`
+		Title   string `json:"title"`
+		StartAt string `json:"start_at"`
+		EndAt   string `json:"end_at"`
+	}
 
 	// post a new agenda
 	r.POST("/admin/agenda", func(c *gin.Context) {
@@ -49,9 +56,7 @@ func AdminAgenda(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		var newAgenda Model.Agenda
-		b1, _ := strconv.ParseBool(c.PostForm("is_published"))
-		newAgenda = Model.Agenda{
+		newAgenda := Model.Agenda{
 			Title:            c.PostForm("title"),
 			Content:          c.PostForm("content"),
 			Image:            os.Getenv("BASE_URL") + "/api/agenda/image/" + image.Filename,
@@ -59,7 +64,6 @@ func AdminAgenda(db *gorm.DB, q *gin.Engine) {
 			EndAt:            c.PostForm("end_at"),
 			PerizinanStartAt: c.PostForm("perizinan_start_at"),
 			PerizinanEndAt:   c.PostForm("perizinan_end_at"),
-			IsPublished:      b1,
 		}
 
 		if err := db.Create(&newAgenda); err.Error != nil {
@@ -69,6 +73,41 @@ func AdminAgenda(db *gorm.DB, q *gin.Engine) {
 				"error":   err.Error.Error(),
 			})
 			return
+		}
+
+		var student []Model.Student
+		if err := db.Find(&student); err.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"message": "error when querying database",
+				"success": false,
+				"error":   err.Error.Error(),
+			})
+		}
+
+		var agenda []Model.Agenda
+		if err := db.Find(&agenda); err.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"message": "error when querying database",
+				"success": false,
+				"error":   err.Error.Error(),
+			})
+		}
+
+		var mark Model.Marking
+
+		mark.AgendaID = newAgenda.ID
+		for i := 0; i < len(student); i++ {
+			fmt.Println(len(student))
+			mark.StudentID = student[i].ID
+			mark.ID = 0
+			if err := db.Create(&mark).Error; err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"message": "can't create links",
+					"success": false,
+					"error":   err.Error(),
+				})
+				return
+			}
 		}
 
 		c.JSON(http.StatusCreated, gin.H{
@@ -90,11 +129,52 @@ func AdminAgenda(db *gorm.DB, q *gin.Engine) {
 			})
 			return
 		}
+		var ret []Agenda
+
+		for _, value := range agenda {
+			var temp Agenda
+			temp.ID = value.ID
+			temp.Title = value.Title
+			temp.StartAt = value.StartAt
+			temp.EndAt = value.EndAt
+			ret = append(ret, temp)
+		}
 		c.JSON(http.StatusOK, gin.H{
 			"success": true,
 			"message": "query completed.",
+			"data":    ret,
+		})
+	})
+
+	// untuk mendapatkan detail agenda dari id
+	r.GET("/admin/agenda/:id", func(c *gin.Context) {
+		id, isIdExists := c.Params.Get("id")
+		if !isIdExists {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"Success": false,
+				"message": "id is not available",
+			})
+			return
+		}
+
+		var agenda Model.Agenda
+
+		if result := db.Where("id = ?", id).Take(&agenda); result.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Error when querying the database.",
+				"error":   result.Error.Error(),
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"success": true,
+			"message": "query successful.",
+			"error":   nil,
 			"data":    agenda,
 		})
+
 	})
 
 	// patch agenda by `agenda.id`
@@ -163,6 +243,36 @@ func AdminAgenda(db *gorm.DB, q *gin.Engine) {
 		})
 	})
 
+	// patch isPublished agenda
+	r.PATCH("/admin/toggle-agenda/:id", func(c *gin.Context) {
+		id, _ := c.Params.Get("id")
+
+		parsedId, _ := strconv.ParseUint(id, 10, 32)
+		b1, _ := strconv.ParseBool(c.PostForm("is_published"))
+		patchToggle := Model.Agenda{
+			ID: uint(parsedId),
+			IsPublished: b1,
+		}
+
+		if err := db.Where("id = ?", id).Model(&patchToggle).Select("is_published").Updates(patchToggle); err.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "error when inserting a new agenda",
+				"error":   err.Error.Error(),
+			})
+			return
+		}
+
+		c.JSON(http.StatusCreated, gin.H{
+			"success": true,
+			"message": "a new agenda has successfully created",
+			"error":   nil,
+			"data":    patchToggle.IsPublished,
+		})
+
+		
+	})
+	
 	// delete agenda by `agenda.id`
 	r.DELETE("/admin/agenda/:id", func(c *gin.Context) {
 		id, isIdExists := c.Params.Get("id")

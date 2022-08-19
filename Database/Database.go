@@ -50,7 +50,6 @@ func Open() *gorm.DB {
 		&Model.PasswordReset{},
 		&Model.StudentAnswer{},
 		&Model.StudentAttendance{},
-		&Model.StudentPerizinan{},
 		&Model.StudentQuiz{},
 		&Model.StudentTask{},
 		&Model.Task{},
