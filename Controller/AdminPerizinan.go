@@ -29,7 +29,7 @@ func AdminPerizinan(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		if user.RoleId < 2 {
+		if user.RoleId > 3 {
 			c.JSON(http.StatusForbidden, gin.H {
 				"success": false,
 				"message": "unauthorized access :(",
@@ -40,7 +40,7 @@ func AdminPerizinan(db *gorm.DB, q *gin.Engine) {
 
 		var perizinan []Model.Perizinan
 
-		if result := db.Where("agenda_id = ?", id).Preload("Student").Find(&perizinan); result.Error != nil {
+		if result := db.Where("agenda_id = ?", id).Preload("Student").Preload("Agenda").Find(&perizinan); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
 				"message": "Error when querying the database.",

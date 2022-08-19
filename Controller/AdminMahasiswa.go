@@ -1,11 +1,13 @@
 package Controller
 
 import (
-	"github.com/gin-gonic/gin"
-	"gorm.io/gorm"
+	"ifelse/Auth"
 	"ifelse/Model"
 	"net/http"
 	"strconv"
+
+	"github.com/gin-gonic/gin"
+	"gorm.io/gorm"
 )
 
 func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
@@ -13,7 +15,7 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 
 	// untuk menampilkan seluruh data mahasiswa yang tersedia
 	// ditambah fitur search dengan menggunakan nama atau nim
-	r.POST("/admin/mahasiswa", func(c *gin.Context) {
+	r.POST("/admin/mahasiswa", Auth.Authorization(), func(c *gin.Context) {
 		name, _ := c.GetQuery("name")
 		nim, _ := c.GetQuery("nim")
 
@@ -60,7 +62,7 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 	})
 
 	// untuk menampilkan data mahasiswa berdasarkan id yang diminta
-	r.GET("/admin/mahasiswa/:id", func(c *gin.Context) {
+	r.GET("/admin/mahasiswa/:id", Auth.Authorization(), func(c *gin.Context) {
 		id, isIdExists := c.Params.Get("id")
 		if !isIdExists {
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -82,7 +84,6 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 		}
 
 		stask := []Model.StudentTask{}
-		// link := []Model.Links{}
 
 		// preload task, mahasiswa, dan links
 		if result := db.Where("student_id = ?", id).Preload("Task").Preload("Student").Find(&stask); result.Error != nil {
@@ -105,52 +106,8 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		// var link Model.Links 
-
-		// if res := db.Where("task_id = ?", id).Find(&link); res.Error != nil {
-		// 	c.JSON(http.StatusInternalServerError, gin.H{
-		// 		"success": false,
-		// 		"message": "Error when querying the database.",
-		// 		"error":   res.Error.Error(),
-		// 	})
-		// 	return
-		// }
-
-
-		
-		// if result := db.Where("task_id = ?", stask.ID).Find(&link); result.Error != nil {
-		// 	c.JSON(http.StatusInternalServerError, gin.H{
-		// 		"success": false,
-		// 		"message": "Error when querying the database.",
-		// 		"error":   result.Error.Error(),
-		// 	})
-		// 	return
-		// }
-		// data := Model.Group{}
-
-		// if group := db.Where("id = ?", mahasiswa.GroupID).Preload("Student").Take(&data); group.Error != nil {
-		// 	c.JSON(http.StatusInternalServerError, gin.H{
-		// 		"success": false,
-		// 		"message": "Error when querying the database.",
-		// 		"error":   group.Error.Error(),
-		// 	})
-		// 	return
-		// }
-
-		// var mark []Model.StudentMarking
-
-		// if rang := db.Where("student_id = ?", mahasiswa.ID).Find(&mark); rang.Error != nil {
-		// 	c.JSON(http.StatusInternalServerError, gin.H{
-		// 		"success": false,
-		// 		"message": "Error when querying the database.",
-		// 		"error":   rang.Error.Error(),
-		// 	})
-		// 	return
-		// }
-		// stask.Links = link[0]
 		mahasiswa.StudentTask = stask
 		mahasiswa.Marking = smark
-		// mahasiswa.StudentMarking = mark
 
 		c.JSON(http.StatusOK, gin.H{
 			"success": true,
@@ -161,7 +118,28 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 	})
 
 	// untuk memperbarui data `group_id` mahasiswa
-	r.PATCH("/admin/mahasiswa/:id", func(c *gin.Context) {
+	r.PATCH("/admin/mahasiswa/:id", Auth.Authorization(), func(c *gin.Context) {
+		ID, _ := c.Get("id")
+
+		var user Model.User
+		if err := db.Where("id = ?", ID).Take(&user); err.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Something went wrong",
+				"error":   err.Error.Error(),
+			})
+			return
+		}
+
+		x := user.RoleId != 3
+		if x || user.RoleId != 0 {
+			c.JSON(http.StatusForbidden, gin.H{
+				"success": false,
+				"message": "unauthorized access :(",
+				"error":   nil,
+			})
+			return
+		}
 		id, _ := c.Params.Get("id")
 
 		var body Model.Student
@@ -212,7 +190,28 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 	})
 
 	// Menghapus mahasiswa berdasrkan ID yang dimiliki
-	r.DELETE("/mahasiswa/:id", func(c *gin.Context) {
+	r.DELETE("/mahasiswa/:id", Auth.Authorization(), func(c *gin.Context) {
+		ID, _ := c.Get("id")
+
+		var user Model.User
+		if err := db.Where("id = ?", ID).Take(&user); err.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Something went wrong",
+				"error":   err.Error.Error(),
+			})
+			return
+		}
+
+		x := user.RoleId != 3
+		if x || user.RoleId != 0 {
+			c.JSON(http.StatusForbidden, gin.H{
+				"success": false,
+				"message": "unauthorized access :(",
+				"error":   nil,
+			})
+			return
+		}
 		id, isIdExists := c.Params.Get("id")
 		if !isIdExists {
 			c.JSON(http.StatusBadRequest, gin.H{

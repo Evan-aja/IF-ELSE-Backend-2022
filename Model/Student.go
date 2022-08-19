@@ -2,7 +2,8 @@ package Model
 
 type Student struct {
 	ID             uint   `gorm:"primaryKey" json:"id"`
-	GroupID        uint   `gorm:"default:1" json:"group_id"`
+	Name           string `gorm:"notNull" json:"name"`
+	GroupID        uint   `gorm:"default:1;null" json:"group_id"`
 	NIM            string `gorm:"uniqueIndex;size:15;notNull" json:"nim"`
 	Nickname       string `gorm:"default:Sobat IF ELSE;notNull;size:255" json:"nickname"`
 	Address        string `gorm:"size:255;notNull" json:"address"`
@@ -13,5 +14,4 @@ type Student struct {
 	Perizinan      []Perizinan
 	Marking        []Marking
 	StudentTask    []StudentTask
-	StudentMarking []StudentMarking
 }

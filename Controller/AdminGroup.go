@@ -1,15 +1,17 @@
 package Controller
 
 import (
-	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
-	"gorm.io/gorm"
+	"ifelse/Auth"
 	"ifelse/Model"
 	"math/rand"
 	"net/http"
 	"os"
 	"strconv"
 	"time"
+
+	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
+	"gorm.io/gorm"
 )
 
 func AdminGroup(db *gorm.DB, q *gin.Engine) {
@@ -22,7 +24,7 @@ func AdminGroup(db *gorm.DB, q *gin.Engine) {
 		GroupName     string `json:"group_name"`
 	}
 	// untuk menampilkan seluruh grup yang ada
-	r.GET("/admin/group", func(c *gin.Context) {
+	r.GET("/admin/group", Auth.Authorization(), func(c *gin.Context) {
 		var group []Model.Group
 
 		if result := db.Preload("Student").Find(&group); result.Error != nil {
@@ -52,7 +54,28 @@ func AdminGroup(db *gorm.DB, q *gin.Engine) {
 	r.Static("/admin/image", "./Images")
 
 	// untuk menambah grup baru di admin page
-	r.POST("/admin/group", func(c *gin.Context) {
+	r.POST("/admin/group", Auth.Authorization(), func(c *gin.Context) {
+		ID, _ := c.Get("id")
+
+		var user Model.User
+		if err := db.Where("id = ?", ID).Take(&user); err.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Something went wrong",
+				"error":   err.Error.Error(),
+			})
+			return
+		}
+
+		x := user.RoleId != 3
+		if x || user.RoleId != 0 {
+			c.JSON(http.StatusForbidden, gin.H {
+				"success": false,
+				"message": "unauthorized access :(",
+				"error": nil,
+			})
+			return
+		} 
 		file, err := c.FormFile("file")
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -112,7 +135,7 @@ func AdminGroup(db *gorm.DB, q *gin.Engine) {
 	})
 
 	// untuk mendapatkan data grup berdasarkan id
-	r.GET("/admin/group/:id", func(c *gin.Context) {
+	r.GET("/admin/group/:id", Auth.Authorization(), func(c *gin.Context) {
 		id, isIdExists := c.Params.Get("id")
 		if !isIdExists {
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -141,7 +164,28 @@ func AdminGroup(db *gorm.DB, q *gin.Engine) {
 	})
 
 	//untuk memperbarui data grup berdasarkan id yang dimiliki
-	r.PATCH("/admin/group/:id", func(c *gin.Context) {
+	r.PATCH("/admin/group/:id", Auth.Authorization(), func(c *gin.Context) {
+		ID, _ := c.Get("id")
+
+		var user Model.User
+		if err := db.Where("id = ?", ID).Take(&user); err.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Something went wrong",
+				"error":   err.Error.Error(),
+			})
+			return
+		}
+
+		x := user.RoleId != 3
+		if x || user.RoleId != 0 {
+			c.JSON(http.StatusForbidden, gin.H {
+				"success": false,
+				"message": "unauthorized access :(",
+				"error": nil,
+			})
+			return
+		} 		
 		id, isIdExists := c.Params.Get("id")
 		if !isIdExists {
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -222,7 +266,28 @@ func AdminGroup(db *gorm.DB, q *gin.Engine) {
 	})
 
 	//untuk delete group berdasarkan id
-	r.DELETE("/admin/group/:id", func(c *gin.Context) {
+	r.DELETE("/admin/group/:id", Auth.Authorization(), func(c *gin.Context) {
+		ID, _ := c.Get("id")
+
+		var user Model.User
+		if err := db.Where("id = ?", ID).Take(&user); err.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Something went wrong",
+				"error":   err.Error.Error(),
+			})
+			return
+		}
+
+		x := user.RoleId != 3
+		if x || user.RoleId != 0 {
+			c.JSON(http.StatusForbidden, gin.H {
+				"success": false,
+				"message": "unauthorized access :(",
+				"error": nil,
+			})
+			return
+		} 
 		id, isIdExists := c.Params.Get("id")
 		if !isIdExists {
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -255,4 +320,5 @@ func AdminGroup(db *gorm.DB, q *gin.Engine) {
 			"message": "Delete successful.",
 		})
 	})
+
 }

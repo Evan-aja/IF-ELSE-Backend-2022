@@ -1,6 +1,7 @@
 package Controller
 
 import (
+	"ifelse/Auth"
 	"ifelse/Model"
 	"net/http"
 
@@ -11,7 +12,27 @@ import (
 func AdminMarking(db *gorm.DB, q *gin.Engine) {
 	r := q.Group("/api")
 
-	r.PATCH("/admin/marking/:id", func(c *gin.Context) {
+	r.PATCH("/admin/marking/:id", Auth.Authorization(), func(c *gin.Context) {
+		ID, _ := c.Get("id")
+
+		var user Model.User
+		if err := db.Where("id = ?", ID).Take(&user); err.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Something went wrong",
+				"error":   err.Error.Error(),
+			})
+			return
+		}
+
+		if user.RoleId > 1 {
+			c.JSON(http.StatusForbidden, gin.H{
+				"success": false,
+				"message": "unauthorized access :(",
+				"error":   nil,
+			})
+			return
+		}
 		id, _ := c.Params.Get("id")
 
 		var body Model.Marking

@@ -31,7 +31,6 @@ func Open() *gorm.DB {
 	}
 
 	// Model
-	// Model
 	if err = db.AutoMigrate(
 		&Model.User{},
 		&Model.Group{},
@@ -57,5 +56,19 @@ func Open() *gorm.DB {
 		&Model.Links{}); err != nil {
 		log.Fatal(err.Error())
 	}
+
+	group := Model.Group{
+		GroupName: "Grup 1",
+		LineGroup: "line.com",
+		CompanionName: "pendamping",
+		IDLine: "@pendamping",
+		LinkFoto: "ini-foto",
+	}
+
+	if result := db.Create(&group); result.Error != nil {
+		fmt.Println(result.Error.Error())
+		fmt.Println("this is expected, server will run normally")
+	}
+
 	return db
 }

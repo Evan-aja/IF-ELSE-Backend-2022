@@ -2,6 +2,7 @@ package Controller
 
 import (
 	"fmt"
+	"ifelse/Auth"
 	"ifelse/Model"
 	"math/rand"
 	"net/http"
@@ -25,7 +26,28 @@ func AdminAgenda(db *gorm.DB, q *gin.Engine) {
 	}
 
 	// post a new agenda
-	r.POST("/admin/agenda", func(c *gin.Context) {
+	r.POST("/admin/agenda", Auth.Authorization(), func(c *gin.Context) {
+		ID, _ := c.Get("id")
+
+		var user Model.User
+		if err := db.Where("id = ?", ID).Take(&user); err.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Something went wrong",
+				"error":   err.Error.Error(),
+			})
+			return
+		}
+
+		x := user.RoleId != 2
+		if x || user.RoleId != 0 {
+			c.JSON(http.StatusForbidden, gin.H {
+				"success": false,
+				"message": "unauthorized access :(",
+				"error": nil,
+			})
+			return
+		} 
 		image, err := c.FormFile("image")
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -119,7 +141,7 @@ func AdminAgenda(db *gorm.DB, q *gin.Engine) {
 	})
 
 	// get all agenda
-	r.GET("/admin/agenda", func(c *gin.Context) {
+	r.GET("/admin/agenda", Auth.Authorization(),func(c *gin.Context) {
 		var agenda []Model.Agenda
 		if result := db.Find(&agenda); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
@@ -147,7 +169,7 @@ func AdminAgenda(db *gorm.DB, q *gin.Engine) {
 	})
 
 	// untuk mendapatkan detail agenda dari id
-	r.GET("/admin/agenda/:id", func(c *gin.Context) {
+	r.GET("/admin/agenda/:id", Auth.Authorization(), func(c *gin.Context) {
 		id, isIdExists := c.Params.Get("id")
 		if !isIdExists {
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -178,7 +200,28 @@ func AdminAgenda(db *gorm.DB, q *gin.Engine) {
 	})
 
 	// patch agenda by `agenda.id`
-	r.PATCH("/admin/agenda/:id", func(c *gin.Context) {
+	r.PATCH("/admin/agenda/:id", Auth.Authorization(), func(c *gin.Context) {
+		ID, _ := c.Get("id")
+
+		var user Model.User
+		if err := db.Where("id = ?", ID).Take(&user); err.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Something went wrong",
+				"error":   err.Error.Error(),
+			})
+			return
+		}
+
+		x := user.RoleId != 2
+		if x || user.RoleId != 0 {
+			c.JSON(http.StatusForbidden, gin.H {
+				"success": false,
+				"message": "unauthorized access :(",
+				"error": nil,
+			})
+			return
+		} 	
 		id, _ := c.Params.Get("id")
 
 		image, err := c.FormFile("image")
@@ -244,7 +287,28 @@ func AdminAgenda(db *gorm.DB, q *gin.Engine) {
 	})
 
 	// patch isPublished agenda
-	r.PATCH("/admin/toggle-agenda/:id", func(c *gin.Context) {
+	r.PATCH("/admin/toggle-agenda/:id", Auth.Authorization(), func(c *gin.Context) {
+		ID, _ := c.Get("id")
+
+		var user Model.User
+		if err := db.Where("id = ?", ID).Take(&user); err.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Something went wrong",
+				"error":   err.Error.Error(),
+			})
+			return
+		}
+
+		x := user.RoleId != 2
+		if x || user.RoleId != 0 {
+			c.JSON(http.StatusForbidden, gin.H {
+				"success": false,
+				"message": "unauthorized access :(",
+				"error": nil,
+			})
+			return
+		} 
 		id, _ := c.Params.Get("id")
 
 		parsedId, _ := strconv.ParseUint(id, 10, 32)
@@ -265,7 +329,7 @@ func AdminAgenda(db *gorm.DB, q *gin.Engine) {
 
 		c.JSON(http.StatusCreated, gin.H{
 			"success": true,
-			"message": "a new agenda has successfully created",
+			"message": "a new agenda has successfully published",
 			"error":   nil,
 			"data":    patchToggle.IsPublished,
 		})
@@ -274,7 +338,28 @@ func AdminAgenda(db *gorm.DB, q *gin.Engine) {
 	})
 	
 	// delete agenda by `agenda.id`
-	r.DELETE("/admin/agenda/:id", func(c *gin.Context) {
+	r.DELETE("/admin/agenda/:id", Auth.Authorization(),func(c *gin.Context) {
+		ID, _ := c.Get("id")
+
+		var user Model.User
+		if err := db.Where("id = ?", ID).Take(&user); err.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Something went wrong",
+				"error":   err.Error.Error(),
+			})
+			return
+		}
+
+		x := user.RoleId != 2
+		if x || user.RoleId != 0 {
+			c.JSON(http.StatusForbidden, gin.H {
+				"success": false,
+				"message": "unauthorized access :(",
+				"error": nil,
+			})
+			return
+		} 
 		id, isIdExists := c.Params.Get("id")
 		if !isIdExists {
 			c.JSON(http.StatusBadRequest, gin.H{

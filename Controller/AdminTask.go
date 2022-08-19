@@ -2,6 +2,7 @@ package Controller
 
 import (
 	"fmt"
+	"ifelse/Auth"
 	"ifelse/Model"
 	"net/http"
 	"strconv"
@@ -14,7 +15,27 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 	r := q.Group("/api")
 
 	// Get All Penugasan
-	r.GET("/admin/task", func(c *gin.Context) {
+	r.GET("/admin/task", Auth.Authorization(), func(c *gin.Context) {
+		ID, _ := c.Get("id")
+
+		var user Model.User
+		if err := db.Where("id = ?", ID).Take(&user); err.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Something went wrong",
+				"error":   err.Error.Error(),
+			})
+			return
+		}
+
+		if user.RoleId > 3 {
+			c.JSON(http.StatusForbidden, gin.H {
+				"success": false,
+				"message": "unauthorized access :(",
+				"error": nil,
+			})
+			return
+		}
 		var task []Model.Task
 
 		if err := db.Find(&task).Error; err != nil {
@@ -27,7 +48,7 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 
 		if task == nil {
 			c.JSON(http.StatusOK, gin.H{
-				"Error":   "Data Is Empty",
+				"Error":   "task isn't available",
 				"success": false,
 			})
 			return
@@ -40,7 +61,7 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 	})
 
 	// Get Penugasan By ID
-	r.GET("/admin/task/:id", func(c *gin.Context) {
+	r.GET("/admin/task/:id", Auth.Authorization(), func(c *gin.Context) {
 		var task Model.Task
 
 		id := c.Param("id")
@@ -71,7 +92,28 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 	})
 
 	// Create Penugasan
-	r.POST("/admin/task", func(c *gin.Context) {
+	r.POST("/admin/task", Auth.Authorization(), func(c *gin.Context) {
+		ID, _ := c.Get("id")
+
+		var user Model.User
+		if err := db.Where("id = ?", ID).Take(&user); err.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Something went wrong",
+				"error":   err.Error.Error(),
+			})
+			return
+		}
+
+		if user.RoleId > 1 {
+			c.JSON(http.StatusForbidden, gin.H {
+				"success": false,
+				"message": "unauthorized access :(",
+				"error": nil,
+			})
+			return
+		} 
+
 		var ntask Model.NewTask
 		var task Model.Task
 		var link Model.Links
@@ -147,7 +189,6 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 			for j := 0; j < int(task.JumlahLink); j++ {
 				studentTask.StudentID = student[i].ID
 				studentTask.LinkID = linkId[j]
-				fmt.Println(studentTask)
 				studentTask.ID = 0
 				if err := db.Create(&studentTask).Error; err != nil {
 					c.JSON(http.StatusInternalServerError, gin.H{
@@ -167,7 +208,27 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 	})
 
 	// Update Penugasan
-	r.PATCH("/admin/task/:id", func(c *gin.Context) {
+	r.PATCH("/admin/task/:id", Auth.Authorization(), func(c *gin.Context) {
+		ID, _ := c.Get("id")
+
+		var user Model.User
+		if err := db.Where("id = ?", ID).Take(&user); err.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Something went wrong",
+				"error":   err.Error.Error(),
+			})
+			return
+		}
+
+		if user.RoleId > 1 {
+			c.JSON(http.StatusForbidden, gin.H {
+				"success": false,
+				"message": "unauthorized access :(",
+				"error": nil,
+			})
+			return
+		} 
 		id := c.Param("id")
 
 		var ntask Model.NewTask
@@ -266,7 +327,27 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 	})
 
 	// Delete Penugasan by Id
-	r.DELETE("/admin/task/:id", func(c *gin.Context) {
+	r.DELETE("/admin/task/:id", Auth.Authorization(), func(c *gin.Context) {
+		ID, _ := c.Get("id")
+
+		var user Model.User
+		if err := db.Where("id = ?", ID).Take(&user); err.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Something went wrong",
+				"error":   err.Error.Error(),
+			})
+			return
+		}
+
+		if user.RoleId > 1 {
+			c.JSON(http.StatusForbidden, gin.H {
+				"success": false,
+				"message": "unauthorized access :(",
+				"error": nil,
+			})
+			return
+		} 
 		id, isIdExists := c.Params.Get("id")
 		if !isIdExists {
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -283,10 +364,10 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 			})
 			return
 		}
-		news := Model.Task{
+		task := Model.Task{
 			ID: uint(parsedId),
 		}
-		if result := db.Delete(&news); result.Error != nil {
+		if result := db.Delete(&task); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
 				"message": "Error when deleting from the database.",
@@ -299,62 +380,4 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 			"message": "Delete successful.",
 		})
 	})
-
-	// Delete All Penugasan
-	//r.DELETE("/delete/all", func(c *gin.Context) {
-	//	var penugasan []Model.Penugasan
-	//
-	//	if err := db.Find(&penugasan).Error; err != nil {
-	//		c.JSON(http.StatusBadRequest, gin.H{
-	//			"message": err.Error(),
-	//			"success": false,
-	//			"Reason":  "Can't find data",
-	//		})
-	//		return
-	//	}
-	//
-	//	if err := db.Delete(&penugasan).Error; err != nil {
-	//		c.JSON(http.StatusBadRequest, gin.H{
-	//			"message": err.Error(),
-	//			"success": false,
-	//			"Reason":  "Can't delete data",
-	//		})
-	//		return
-	//	}
-
-	//	c.JSON(http.StatusOK, gin.H{
-	//		"data":    penugasan,
-	//		"success": true,
-	//	})
-	//})
-
-	// Delete All Penugasan
-	//r.DELETE("/delete/all/:id", func(c *gin.Context) {
-	//	var penugasan []Model.Penugasan
-	//
-	//	id := c.Param("id")
-	//
-	//	if err := db.Where("id = ?", id).Find(&penugasan).Error; err != nil {
-	//		c.JSON(http.StatusBadRequest, gin.H{
-	//			"message": err.Error(),
-	//			"success": false,
-	//			"Reason":  "Can't find data",
-	//		})
-	//		return
-	//	}
-	//
-	//	if err := db.Delete(&penugasan).Error; err != nil {
-	//		c.JSON(http.StatusBadRequest, gin.H{
-	//			"message": err.Error(),
-	//			"success": false,
-	//			"Reason":  "Can't delete data",
-	//		})
-	//		return
-	//	}
-	//
-	//	c.JSON(http.StatusOK, gin.H{
-	//		"data":    penugasan,
-	//		"success": true,
-	//	})
-	//})
 }

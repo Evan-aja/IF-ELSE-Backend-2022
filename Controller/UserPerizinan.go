@@ -15,7 +15,6 @@ func UserPerizinan(db *gorm.DB, q *gin.Engine) {
 	r.POST("/perizinan", Auth.Authorization(), func(c *gin.Context) {
 		id, _ := c.MustGet("id").(uint)
 		
-		// studentId := uint(id)
 		var body Model.Perizinan
 
 		if err := c.BindJSON(&body); err != nil {

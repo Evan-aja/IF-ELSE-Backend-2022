@@ -1,6 +1,7 @@
 package Controller
 
 import (
+	"ifelse/Auth"
 	"ifelse/Model"
 	"math/rand"
 	"net/http"
@@ -23,7 +24,28 @@ func AdminNews(db *gorm.DB, q *gin.Engine) {
 	}
 
 	// untuk menambah berita baru di admin page
-	r.POST("/admin/news", func(c *gin.Context) {
+	r.POST("/admin/news", Auth.Authorization(), func(c *gin.Context) {
+		ID, _ := c.Get("id")
+
+		var user Model.User
+		if err := db.Where("id = ?", ID).Take(&user); err.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Something went wrong",
+				"error":   err.Error.Error(),
+			})
+			return
+		}
+
+		x := user.RoleId != 0
+		if x || user.RoleId != 2 {
+			c.JSON(http.StatusForbidden, gin.H {
+				"success": false,
+				"message": "unauthorized access :(",
+				"error": nil,
+			})
+			return
+		} 
 		file, err := c.FormFile("image")
 		if err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -78,7 +100,7 @@ func AdminNews(db *gorm.DB, q *gin.Engine) {
 	})
 
 	// untuk mendapatkan seluruh data news
-	r.GET("/admin/news", func(c *gin.Context) {
+	r.GET("/admin/news", Auth.Authorization(), func(c *gin.Context) {
 		var news []Model.News
 
 		if result := db.Find(&news); result.Error != nil {
@@ -107,7 +129,7 @@ func AdminNews(db *gorm.DB, q *gin.Engine) {
 	})
 
 	// untuk mendapatkan detail news dari id
-	r.GET("/admin/news-detail/:id", func(c *gin.Context) {
+	r.GET("/admin/news-detail/:id", Auth.Authorization(), func(c *gin.Context) {
 		id, isIdExists := c.Params.Get("id")
 		if !isIdExists {
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -137,7 +159,28 @@ func AdminNews(db *gorm.DB, q *gin.Engine) {
 	})
 
 	// untuk memperbarui data news
-	r.PATCH("/admin/news/:id", func(c *gin.Context) {
+	r.PATCH("/admin/news/:id", Auth.Authorization(), func(c *gin.Context) {
+		ID, _ := c.Get("id")
+
+		var user Model.User
+		if err := db.Where("id = ?", ID).Take(&user); err.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Something went wrong",
+				"error":   err.Error.Error(),
+			})
+			return
+		}
+
+		x := user.RoleId != 0
+		if x || user.RoleId != 2 {
+			c.JSON(http.StatusForbidden, gin.H {
+				"success": false,
+				"message": "unauthorized access :(",
+				"error": nil,
+			})
+			return
+		} 
 		id, isIdExists := c.Params.Get("id")
 		if !isIdExists {
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -222,7 +265,28 @@ func AdminNews(db *gorm.DB, q *gin.Engine) {
 	})
 
 	// untuk menghapus data news
-	r.DELETE("/admin/news/:id", func(c *gin.Context) {
+	r.DELETE("/admin/news/:id", Auth.Authorization(), func(c *gin.Context) {
+		ID, _ := c.Get("id")
+
+		var user Model.User
+		if err := db.Where("id = ?", ID).Take(&user); err.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Something went wrong",
+				"error":   err.Error.Error(),
+			})
+			return
+		}
+
+		x := user.RoleId != 0
+		if x || user.RoleId != 2 {
+			c.JSON(http.StatusForbidden, gin.H {
+				"success": false,
+				"message": "unauthorized access :(",
+				"error": nil,
+			})
+			return
+		} 
 		id, isIdExists := c.Params.Get("id")
 		if !isIdExists {
 			c.JSON(http.StatusBadRequest, gin.H{
