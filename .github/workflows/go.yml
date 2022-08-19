@@ -1,0 +1,40 @@
+name: Go
+
+on:
+  push:
+    branches: [ "main" ]
+  pull_request:
+    branches: [ "main" ]
+
+jobs:
+
+  build:
+    runs-on: ubuntu-latest
+    
+    services:
+      mysql:
+        image: mariadb:latest
+        env:
+          MYSQL_ROOT_PASSWORD: 123
+          MYSQL_DATABASE: ifelsedb
+        ports: ['3306:3306']
+        
+    steps:
+    - uses: actions/checkout@v3
+
+    - name: Set up Go
+      uses: actions/setup-go@v3
+      with:
+        go-version: 1.19
+        
+    - name: Get
+      run: go get
+      
+    - name: Build
+      run: go build -v
+      
+    - name: make .env
+      run: printf "DB_USER=root\nDB_PASS=123\nDB_HOST=localhost:3306\nDB_NAME=ifelse\nGIN_MODE=debug\nTOKEN_G=asd123\nBASE_URL=localhost\nPROXY_1=localhost\n" > .env
+      
+    - name: Run ifelse program
+      run: ./ifelse
