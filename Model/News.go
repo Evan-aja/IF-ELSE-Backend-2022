@@ -9,7 +9,7 @@ type News struct {
 	Title       string    `gorm:"notNull;size:255" json:"title"`
 	Content     string    `gorm:"type:text;null" json:"content"`
 	Image       string    `gorm:"null;size:255" json:"image"`
-	PublishedAt time.Time `gorm:"notNull" json:"published_at"`
+	// PublishedAt time.Time `gorm:"notNull" json:"published_at"`
 	IsPublished bool      `gorm:"default:true;notNull" json:"is_published"`
 	CreatedAt   time.Time `gorm:"notNull;default:current_timestamp" json:"created_at"`
 	UpdatedAt   time.Time `gorm:"type:timestamp" json:"updated_at"`

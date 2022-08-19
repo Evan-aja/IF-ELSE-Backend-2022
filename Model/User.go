@@ -10,10 +10,9 @@ type User struct {
 	Username      string    `gorm:"size:255;notNull" json:"username"`
 	Email         string    `gorm:"size:255;notNull" json:"email"`
 	Password      string    `gorm:"notNull;size:255" json:"password"`
-	ApiToken      string    `gorm:"null;uniqueIndex;size:80;" json:"api_token"`
-	RoleId        string    `gorm:"default:1;notNull;size:255" json:"role_id"`
-	StudentId     uint      `json:"student_id"`
-	Student       Student   `gorm:"ForeignKey:StudentId;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	RoleId        uint32    `gorm:"default:4;notNull" json:"role_id"`
+	StudentID     uint      `json:"student_id"`
+	Student       Student   `gorm:"ForeignKey:StudentID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 	PermittedFor  string    `gorm:"default:news,tasks,quizs;size:255;notNull"`
 	RememberToken string    `gorm:"size:100"`
 	CreatedAt     time.Time `json:"created_at"`

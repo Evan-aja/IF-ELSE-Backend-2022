@@ -31,8 +31,44 @@ func Open() *gorm.DB {
 	}
 
 	// Model
-	if err = db.AutoMigrate(&Model.Agenda{}, &Model.Attendance{}, &Model.Graduation{}, &Model.GroupCompanions{}, &Model.Marking{}, &Model.News{}, &Model.Pendataan{}, &Model.Perizinan{}, &Model.Permission{}, &Model.QuizQuestion{}, &Model.Quizs{}, &Model.PasswordReset{}, &Model.Student{}, &Model.StudentAnswer{}, &Model.StudentAttendance{}, &Model.StudentPerizinan{}, &Model.StudentQuiz{}, &Model.StudentTask{}, &Model.Task{}, &Model.User{}); err != nil {
+	if err = db.AutoMigrate(
+		&Model.User{},
+		&Model.Group{},
+		&Model.Student{},
+		&Model.Agenda{},
+		&Model.Attendance{},
+		&Model.Graduation{},
+		&Model.GroupCompanions{},
+		&Model.Marking{},
+		&Model.News{},
+		&Model.Pendataan{},
+		&Model.Perizinan{},
+		&Model.Permission{},
+		&Model.QuizQuestion{},
+		&Model.Quizs{},
+		&Model.PasswordReset{},
+		&Model.StudentAnswer{},
+		&Model.StudentAttendance{},
+		&Model.StudentQuiz{},
+		&Model.StudentTask{},
+		&Model.Task{},
+		&Model.StudentMarking{},
+		&Model.Links{}); err != nil {
 		log.Fatal(err.Error())
 	}
+
+	group := Model.Group{
+		GroupName: "Grup 1",
+		LineGroup: "line.com",
+		CompanionName: "pendamping",
+		IDLine: "@pendamping",
+		LinkFoto: "ini-foto",
+	}
+
+	if result := db.Create(&group); result.Error != nil {
+		fmt.Println(result.Error.Error())
+		fmt.Println("this is expected, server will run normally")
+	}
+
 	return db
 }

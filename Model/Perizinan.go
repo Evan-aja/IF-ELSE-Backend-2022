@@ -4,7 +4,13 @@ import "time"
 
 type Perizinan struct {
 	ID        uint      `gorm:"primaryKey" json:"id"`
-	AgendaID  int32     `gorm:"notNull" json:"agenda_id"`
-	StartedAt time.Time `gorm:"notNull" json:"started_at"`
-	EndAt     time.Time `gorm:"notNull" json:"end_at"`
+	AgendaID  uint      `json:"agenda_id"`
+	Agenda    Agenda    `json:"agenda"`
+	StudentID uint      `json:"student_id"`
+	Student   Student   `json:"student"`
+	LinkSurat string    `gorm:"text;notNull" json:"link_surat"`
+	CreatedAt time.Time `json:"created_at"`
+	UpdatedAt time.Time `json:"updated_at"`
 }
+
+// student_id nya apa, agenda_id nya apa terus baru upload

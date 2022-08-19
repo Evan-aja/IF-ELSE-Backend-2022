@@ -23,6 +23,7 @@ func User(db *gorm.DB, q *gin.Engine) {
 			})
 			return
 		}
+
 		c.JSON(http.StatusOK, gin.H{
 			"success": true,
 			"error":   nil,
@@ -145,10 +146,9 @@ func User(db *gorm.DB, q *gin.Engine) {
 			}
 
 			c.JSON(http.StatusCreated, gin.H{
-				"success":  true,
-				"message":  "password berhasil diperbarui",
-				"password": user.Password,
-				"data":     user.Name,
+				"success": true,
+				"message": "password " + user.Username  + " berhasil diperbarui",
+				"error":   nil,
 			})
 		} else {
 			c.JSON(http.StatusBadRequest, gin.H{

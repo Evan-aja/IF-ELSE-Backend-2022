@@ -28,24 +28,22 @@ func Register(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 		regist := Model.Student{
-			Name:    input.Name,
-			NIM:     input.NIM,
-			Address: input.Address,
+			Name: input.Name,
+			NIM:  input.NIM,
 		}
 		if err := db.Create(&regist); err.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
-				"message": "Something went wrong with user creation",
+				"message": "Something went wrong with student creation",
 				"error":   err.Error.Error(),
 			})
 			return
 		}
 		regist2 := Model.User{
-			Name:      input.Name,
 			Username:  input.Username,
 			Email:     input.Email,
 			Password:  hash(input.Password),
-			StudentId: regist.ID,
+			StudentID: regist.ID,
 		}
 		if err := db.Create(&regist2); err.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
@@ -105,7 +103,6 @@ func Register(db *gorm.DB, q *gin.Engine) {
 				"message": "Welcome, here's your token. don't lose it ;)",
 				"data": gin.H{
 					"email": email.Email,
-					"name":  email.Name,
 					"token": strToken,
 				},
 			})
