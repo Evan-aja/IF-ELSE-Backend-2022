@@ -74,7 +74,7 @@ func UserNews(db *gorm.DB, q *gin.Engine) {
 		if result := db.Last(&news); result.Error != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"success": false,
-				"message": "students is not found.",
+				"message": "news is not found.",
 				"error":   result.Error.Error(),
 			})
 			return
