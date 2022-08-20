@@ -47,17 +47,16 @@ func UserTask(db *gorm.DB, q *gin.Engine) {
 		}
 
 		c.JSON(http.StatusOK, gin.H{
-			"data": task,
+			"data":    task,
 			"success": true,
 			"error":   nil,
 		})
 	})
 
-
 	r.PATCH("/task", Auth.Authorization(), func(c *gin.Context) {
 		id, _ := c.MustGet("id").(uint)
 
-		var body Model.StudentTask
+		var body Model.NewTask
 
 		if err := c.BindJSON(&body); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
@@ -67,36 +66,63 @@ func UserTask(db *gorm.DB, q *gin.Engine) {
 			})
 			return
 		}
+		var slink []Model.StudentTask
+		var task Model.Task
 
-		signTask := Model.StudentTask {
-			ID: body.ID,
-			StudentID: id,
-			Link: body.Link,
-			UpdatedAt: time.Now(),
-		} 
-		if err := db.Updates(&signTask); err.Error != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"success": false,
-				"message": "error when inserting a new task link",
-				"error":   err.Error.Error(),
-			})
-			return
+		for i := 0; i < len(body.Links); i++ {
+			if res := db.Where("task_id = ?", body.ID).Find(&slink); res.Error != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"message": "can't create links",
+					"success": false,
+					"error":   res.Error.Error(),
+				})
+				return
+			}
+			slink[i].Link = body.Links[i]
+			slink[i].StudentID = id
+
+
+			if res := db.Updates(&slink[i]); res.Error != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"message": "can't updates links",
+					"success": false,
+					"error":   res.Error.Error(),
+				})
+				return
+			}
+
+			if res := db.Where("id = ?", slink[i].TaskID).Take(&task); res.Error != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"message": "can't found task",
+					"success": false,
+					"error":   res.Error.Error(),
+				})
+				return
+			}
 		}
 
-		if err := db.Preload("Task").Preload("Links.Task").Preload("Student").Take(&signTask); err.Error != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"success": false,
-				"message": "error when query data",
-				"error":   err.Error.Error(),
-			})
-			return
+		type StudentTask struct {
+			ID uint `json:"id"`
+			TaskTitle string `json:"task_title"`
+			Link string `json:"link"`
+			UpdatedAt time.Time `json:"time"`
+		}
+
+		var ret[] StudentTask
+		for _, element := range slink {
+			var temp StudentTask
+			temp.ID = element.ID
+			temp.Link = element.Link
+			temp.TaskTitle = task.Title
+			temp.UpdatedAt = element.UpdatedAt
+			ret = append(ret, temp)
 		}
 
 		c.JSON(http.StatusCreated, gin.H{
 			"success": true,
-			"message": "a new group has successfully created",
+			"message": "a new link has successfully uploaded",
 			"error":   nil,
-			"data":   signTask,
+			"data":    ret,
 		})
 	})
 }

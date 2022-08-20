@@ -11,7 +11,7 @@ type Student struct {
 	Whatsapp    string `gorm:"default:-;size:255" json:"whatsapp"`
 	Line        string `gorm:"default:-;size:255" json:"line"`
 	Avatar      string `gorm:"default:https://i.imgur.com/5HAGlzV.png;size:255" json:"avatar"`
-	About       string `gorm:"default:-;size:255" json:"about"`
+	About       string `gorm:"default:-size:255" json:"about"`
 	Perizinan   []Perizinan
 	Marking     []Marking
 	StudentTask []StudentTask

@@ -14,7 +14,9 @@ func UserAgenda(db *gorm.DB, q *gin.Engine) {
 	type Agenda struct {
 		ID      uint   `json:"id"`
 		Title   string `json:"title"`
+		Content string `json:"content"`
 		Image   string `json:"image"`
+		IsPublished bool `json:"is_published"`
 		StartAt string `json:"start_at"`
 		EndAt   string `json:"end_at"`
 	}
@@ -35,6 +37,8 @@ func UserAgenda(db *gorm.DB, q *gin.Engine) {
 			var temp Agenda
 			temp.ID = value.ID
 			temp.Title = value.Title
+			temp.Content = value.Content
+			temp.IsPublished = value.IsPublished
 			temp.Image = value.Image
 			temp.StartAt = value.StartAt
 			temp.EndAt = value.EndAt

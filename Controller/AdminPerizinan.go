@@ -12,6 +12,14 @@ import (
 func AdminPerizinan(db *gorm.DB, q *gin.Engine) {
 	r := q.Group("/api")
 
+	type Student struct {
+		ID        uint   `json:"id"`
+		Name      string `json:"name"`
+		GroupName string `json:"group_name"`
+		NIM       string `json:"nim"`
+		LinkSurat string `json:"link_surat"`
+	}
+
 	r.GET("/admin/perizinan/:id", Auth.Authorization(), func(c *gin.Context) {
 		// buat ambil ID untuk agenda
 		id, _ := c.Params.Get("id")
@@ -49,10 +57,31 @@ func AdminPerizinan(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
+		var group Model.Group
+		var ret []Student
+
+		for i := 0; i < len(perizinan); i++ {
+			if result := db.Where("id = ?", perizinan[i].Student.GroupID).Find(&group); result.Error != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"success": false,
+					"message": "Error when querying the database.",
+					"error":   result.Error.Error(),
+				})
+				return
+			}
+			var temp Student
+			temp.ID = perizinan[i].Student.ID
+			temp.Name = perizinan[i].Student.Name
+			temp.GroupName = group.GroupName
+			temp.NIM = perizinan[i].Student.NIM
+			temp.LinkSurat = perizinan[i].LinkSurat
+			ret = append(ret, temp)
+		}
+
 		c.JSON(http.StatusOK, gin.H {
 			"success": true,
 			"message": "query completed.",
-			"data":    perizinan,
+			"data":    ret,
 		})
 	})
 }

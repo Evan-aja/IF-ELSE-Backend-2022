@@ -5,6 +5,7 @@ import (
 	"ifelse/Model"
 	"net/http"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
@@ -19,6 +20,10 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 		GroupName string `json:"group_name"`
 		NIM       string `json:"nim"`
 	}
+
+	// type StudentTask struct {
+
+	// }
 
 	// untuk menampilkan seluruh data mahasiswa yang tersedia
 	// ditambah fitur search dengan menggunakan nama atau nim
@@ -98,7 +103,7 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 			"success": true,
 			"message": "query completed.",
 			"data":    ret,
-			"length": len(ret),
+			"length":  len(ret),
 		})
 
 		// for  i := 0, element := index quequeryResults {
@@ -171,7 +176,7 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		stask := []Model.StudentTask{}
+		var stask []Model.StudentTask
 
 		// preload task, mahasiswa, dan links
 		if result := db.Where("student_id = ?", id).Find(&stask); result.Error != nil {
@@ -183,6 +188,36 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
+		var task []Model.Task
+		type StudentTask struct {
+			ID        uint      `json:"id"`
+			TaskTitle[] string    `json:"task_title"`
+			Link      string    `json:"link"`
+			UpdatedAt time.Time `json:"time"`
+		}
+
+		var ret []StudentTask
+		var temp StudentTask	
+
+		for i := 0; i < len(stask); i++ {
+			if res := db.Where("id = ?", &stask[i].TaskID).Find(&task); res.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"message": "can't found task",
+				"success": false,
+				"error":   res.Error.Error(),
+			})
+			return
+			}	
+			temp.ID = stask[i].ID
+			temp.Link = stask[i].Link
+
+			// gabisa nampilin titlenya
+			temp.TaskTitle[i] = task[i].Title
+			temp.UpdatedAt = stask[i].UpdatedAt
+			ret = append(ret, temp)
+		}
+
+
 		// taskTitle := Model.Task{}
 
 		// if result := db.Where("task_id = ?", stask.).Find(&stask); result.Error != nil {
@@ -193,8 +228,6 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 		// 	})
 		// 	return
 		// }
-
-
 
 		smark := []Model.Marking{}
 
@@ -208,13 +241,13 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 		}
 
 		mahasiswa.GroupName = group.GroupName
-		mahasiswa.StudentTask = stask
 		mahasiswa.Marking = smark
 
 		c.JSON(http.StatusOK, gin.H{
 			"success": true,
 			"message": "query completed.",
 			"data":    mahasiswa,
+			"student_task": ret,
 		})
 
 	})

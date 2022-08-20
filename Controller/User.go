@@ -3,14 +3,19 @@ package Controller
 import (
 	"ifelse/Auth"
 	"ifelse/Model"
+	"math/rand"
 	"net/http"
+	"os"
+	"time"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
 	"gorm.io/gorm"
 )
 
 func User(db *gorm.DB, q *gin.Engine) {
 	r := q.Group("/api")
+	r.Static("/user/image", "./Images")
 	// show logged in user profile
 	r.GET("/profile", Auth.Authorization(), func(c *gin.Context) {
 		id, _ := c.Get("id")
@@ -58,7 +63,6 @@ func User(db *gorm.DB, q *gin.Engine) {
 			Line:     body.Line,
 			Whatsapp: body.Whatsapp,
 			About:    body.About,
-			Avatar:   body.Avatar,
 		}
 
 		result := db.Where("id = ?", id).Model(&mahasiswa).Updates(mahasiswa)
@@ -147,7 +151,7 @@ func User(db *gorm.DB, q *gin.Engine) {
 
 			c.JSON(http.StatusCreated, gin.H{
 				"success": true,
-				"message": "password " + user.Username  + " berhasil diperbarui",
+				"message": "password " + user.Username + " berhasil diperbarui",
 				"error":   nil,
 			})
 		} else {
@@ -159,4 +163,82 @@ func User(db *gorm.DB, q *gin.Engine) {
 		}
 	})
 
+	r.PATCH("/profile-picture", Auth.Authorization(), func(c *gin.Context) {
+		id, _ := c.Get("id")
+
+		var student Model.Student
+		var newAvatar Model.Student
+
+		avatar, _ := c.FormFile("avatar")
+
+		if avatar != nil {
+			rand.Seed(time.Now().Unix())
+
+			str := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+			shuff := []rune(str)
+
+			rand.Shuffle(len(shuff), func(i, j int) {
+				shuff[i], shuff[j] = shuff[j], shuff[i]
+			})
+			avatar.Filename = string(shuff)
+
+			if err := c.SaveUploadedFile(avatar, "./Images/"+avatar.Filename); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{
+					"Success": false,
+					"error":   "upload file err: " + err.Error(),
+				})
+				return
+			}
+
+			godotenv.Load("../.env")
+			newAvatar = Model.Student{
+				Avatar:      os.Getenv("BASE_URL") + "/api/user/image/" + avatar.Filename,
+			}
+		} else {
+			if res := db.Where("id = ?", id).Take(&student); res.Error != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"success": false,
+					"message": "Error when updating the database.",
+					"error":   res.Error.Error(),
+				})
+			}
+			newAvatar = Model.Student{
+				Avatar:      student.Avatar,
+			}
+		}
+
+		result := db.Where("id = ?", id).Model(&newAvatar).Updates(newAvatar)
+		if result.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Error when updating the database.",
+				"error":   result.Error.Error(),
+			})
+			return
+		}
+
+		if result = db.Where("id = ?", id).Take(&newAvatar); result.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Error when querying the database.",
+				"error":   result.Error.Error(),
+			})
+			return
+		}
+
+		if result.RowsAffected < 1 {
+			c.JSON(http.StatusNotFound, gin.H{
+				"success": false,
+				"message": "group not found.",
+			})
+			return
+		}
+		c.JSON(http.StatusCreated, gin.H{
+			"success": true,
+			"message": "Update successful.",
+			"data":    newAvatar.Avatar,
+		})
+
+	})
 }
