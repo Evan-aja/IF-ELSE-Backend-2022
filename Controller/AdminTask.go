@@ -38,7 +38,7 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 		}
 		var task []Model.Task
 
-		if err := db.Find(&task).Error; err != nil {
+		if err := db.Preload("Links").Find(&task).Error; err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"message": err.Error(),
 				"success": false,
