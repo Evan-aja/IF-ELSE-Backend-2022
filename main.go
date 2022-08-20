@@ -71,6 +71,7 @@ func main() {
 	Controller.UserNews(db, r)
 	Controller.UserPerizinan(db, r)
 	Controller.UserTask(db, r)
+	Controller.UserAgenda(db, r)
 
 	//Server init
 	if err := r.Run(":5000"); err != nil {
