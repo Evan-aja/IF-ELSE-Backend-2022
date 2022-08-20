@@ -62,6 +62,27 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 
 	// Get Penugasan By ID
 	r.GET("/admin/task/:id", Auth.Authorization(), func(c *gin.Context) {
+		ID, _ := c.Get("id")
+
+		var user Model.User
+		if err := db.Where("id = ?", ID).Take(&user); err.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Something went wrong",
+				"error":   err.Error.Error(),
+			})
+			return
+		}
+
+		if user.RoleId > 3 {
+			c.JSON(http.StatusForbidden, gin.H {
+				"success": false,
+				"message": "unauthorized access :(",
+				"error": nil,
+			})
+			return
+		}
+		
 		var task Model.Task
 
 		id := c.Param("id")
@@ -74,15 +95,6 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 			})
 			return
 		}
-
-		// if task.Title == "" {
-		// 	c.JSON(http.StatusOK, gin.H{
-		// 		"message": penugasan,
-		// 		"error":   "Data Is Empty",
-		// 		"success": false,
-		// 	})
-		// 	return
-		// }
 
 		c.JSON(http.StatusOK, gin.H{
 			"data": task,

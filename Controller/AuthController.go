@@ -75,24 +75,27 @@ func Register(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 		email := Model.User{}
-		if err := db.Where("email=?", input.Email).Take(&email); err.Error != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"success": false,
-				"message": "Email does not exist",
-				"error":   err.Error.Error(),
-			})
-			return
+		if input.Username == "" {
+			if err := db.Where("email=?", input.Email).Take(&email); err.Error != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"success": false,
+					"message": "Email does not exist",
+					"error":   err.Error.Error(),
+				})
+				return
+			}
+		} else if input.Email == "" {
+			if err := db.Where("username=?", input.Username).Take(&email); err.Error != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"success": false,
+					"message": "Email does not exist",
+					"error":   err.Error.Error(),
+				})
+				return
+			}
 		}
-		username := Model.User{}
-		if err := db.Where("username=?", input.Username).Take(&username); err.Error != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"success": false,
-				"message": "Email does not exist",
-				"error":   err.Error.Error(),
-			})
-			return
-		}
-		if (email.Password == hash(input.Password) && username.Password == hash(input.Password))  {
+
+		if email.Password == hash(input.Password)  {
 			token := jwt.NewWithClaims(jwt.SigningMethodHS512, jwt.MapClaims{
 				"id":  email.ID,
 				"exp": time.Now().Add(time.Hour * 7 * 24).Unix(),

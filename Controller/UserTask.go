@@ -32,6 +32,28 @@ func UserTask(db *gorm.DB, q *gin.Engine) {
 		})
 	})
 
+	r.GET("/task/:id", func(c *gin.Context) {
+		var task Model.Task
+
+		id := c.Param("id")
+
+		if err := db.Where("id = ?", id).Preload("Links").First(&task).Error; err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"error":   err.Error(),
+				"message": "Something went wrong on server side",
+				"success": false,
+			})
+			return
+		}
+
+		c.JSON(http.StatusOK, gin.H{
+			"data": task,
+			"success": true,
+			"error":   nil,
+		})
+	})
+
+
 	r.PATCH("/task", Auth.Authorization(), func(c *gin.Context) {
 		id, _ := c.MustGet("id").(uint)
 

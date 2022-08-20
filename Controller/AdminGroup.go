@@ -23,6 +23,7 @@ func AdminGroup(db *gorm.DB, q *gin.Engine) {
 		CompanionName string `json:"companion_name"`
 		GroupName     string `json:"group_name"`
 	}
+
 	// untuk menampilkan seluruh grup yang ada
 	r.GET("/admin/group", Auth.Authorization(), func(c *gin.Context) {
 		var group []Model.Group
@@ -167,7 +168,7 @@ func AdminGroup(db *gorm.DB, q *gin.Engine) {
 
 		group := Model.Group{}
 
-		if result := db.Where("id = ?", id).Preload("Student").Take(&group); result.Error != nil {
+		if result := db.Where("id = ?", id).Take(&group); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
 				"message": "Error when querying the database.",
@@ -175,6 +176,31 @@ func AdminGroup(db *gorm.DB, q *gin.Engine) {
 			})
 			return
 		}
+
+		var student []Model.Student
+		if result := db.Where("group_id = ?", id).Find(&student); result.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Error when querying the database.",
+				"error":   result.Error.Error(),
+			})
+			return
+		}
+
+		for i := 0; i < len(student); i++ {
+			if result := db.Where("id = ?", student[i].GroupID).Find(&group); result.Error != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"success": false,
+					"message": "Error when querying the database.",
+					"error":   result.Error.Error(),
+				})
+				return
+			}
+			student[i].GroupName = group.GroupName
+		}
+
+		group.Student = student
+
 
 		c.JSON(http.StatusOK, gin.H{
 			"success": true,

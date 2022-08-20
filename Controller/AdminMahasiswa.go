@@ -13,6 +13,13 @@ import (
 func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 	r := q.Group("/api")
 
+	type Student struct {
+		ID        uint   `json:"id"`
+		Name      string `json:"name"`
+		GroupName string `json:"group_name"`
+		NIM       string `json:"nim"`
+	}
+
 	// untuk menampilkan seluruh data mahasiswa yang tersedia
 	// ditambah fitur search dengan menggunakan nama atau nim
 	r.POST("/admin/mahasiswa", Auth.Authorization(), func(c *gin.Context) {
@@ -58,7 +65,7 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 
 		var queryResults []Model.Student
 
-		if res := db.Where("nickname LIKE ?", "%"+name+"%").Where("nim LIKE ?", "%"+nim+"%").Offset(offset).Limit(pageSize).Find(&queryResults); res.Error != nil {
+		if res := db.Where("name LIKE ?", "%"+name+"%").Where("nim LIKE ?", "%"+nim+"%").Offset(offset).Limit(pageSize).Find(&queryResults); res.Error != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"success": false,
 				"message": "students is not found.",
@@ -67,17 +74,50 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
+		var group Model.Group
+
+		for i := 0; i < len(queryResults); i++ {
+			if result := db.Where("id = ?", queryResults[i].GroupID).Find(&group); result.Error != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"success": false,
+					"message": "Error when querying the database.",
+					"error":   result.Error.Error(),
+				})
+				return
+			}
+		}
+
+		var ret []Student
+
+		for _, value := range queryResults {
+			var temp Student
+			temp.ID = value.ID
+			temp.Name = value.Name
+			temp.GroupName = group.GroupName
+			temp.NIM = value.NIM
+			ret = append(ret, temp)
+		}
 		c.JSON(http.StatusOK, gin.H{
 			"success": true,
-			"message": "Search successful",
-			"data": gin.H{
-				"query": gin.H{
-					"name": name,
-					"nim":  nim,
-				},
-				"result": queryResults,
-			},
+			"message": "query completed.",
+			"data":    ret,
 		})
+
+		// for  i := 0, element := index quequeryResults {
+
+		// }
+
+		// c.JSON(http.StatusOK, gin.H{
+		// 	"success": true,
+		// 	"message": "Search successful",
+		// 	"data": gin.H{
+		// 		"query": gin.H{
+		// 			"name": name,
+		// 			"nim":  nim,
+		// 		},
+		// 		"result": queryResults,
+		// 	},
+		// })
 
 	})
 
@@ -122,6 +162,16 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 			})
 			return
 		}
+		var group Model.Group
+
+		if result := db.Where("id = ?", mahasiswa.GroupID).Find(&group); result.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Error when querying the database.",
+				"error":   result.Error.Error(),
+			})
+			return
+		}
 
 		stask := []Model.StudentTask{}
 
@@ -146,6 +196,7 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
+		mahasiswa.GroupName = group.GroupName
 		mahasiswa.StudentTask = stask
 		mahasiswa.Marking = smark
 
@@ -170,7 +221,6 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 			})
 			return
 		}
-
 
 		if user.RoleId != 0 && user.RoleId != 3 {
 			c.JSON(http.StatusForbidden, gin.H{
@@ -251,7 +301,7 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 			})
 			return
 		}
-		
+
 		id, isIdExists := c.Params.Get("id")
 		if !isIdExists {
 			c.JSON(http.StatusBadRequest, gin.H{
