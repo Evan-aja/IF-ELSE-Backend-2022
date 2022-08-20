@@ -241,41 +241,54 @@ func AdminGroup(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		file, err := c.FormFile("file")
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"success": false,
-				"error":   "get form err: " + err.Error(),
+		file, _ := c.FormFile("file")
+
+		var newGroup Model.Group
+		var group Model.Group
+
+		if file != nil {
+			rand.Seed(time.Now().Unix())
+
+			str := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	
+			shuff := []rune(str)
+	
+			rand.Shuffle(len(shuff), func(i, j int) {
+				shuff[i], shuff[j] = shuff[j], shuff[i]
 			})
-			return
-		}
-
-		rand.Seed(time.Now().Unix())
-
-		str := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
-		shuff := []rune(str)
-
-		rand.Shuffle(len(shuff), func(i, j int) {
-			shuff[i], shuff[j] = shuff[j], shuff[i]
-		})
-		file.Filename = string(shuff)
-
-		if err := c.SaveUploadedFile(file, "./Images/"+file.Filename); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"Success": false,
-				"error":   "upload file err: " + err.Error(),
-			})
-			return
-		}
-
-		godotenv.Load("../.env")
-		newGroup := Model.Group{
-			GroupName:     c.PostForm("group_name"),
-			LineGroup:     c.PostForm("line_group"),
-			CompanionName: c.PostForm("companion_name"),
-			IDLine:        c.PostForm("id_line"),
-			LinkFoto:      os.Getenv("BASE_URL") + "/api/admin/image/" + file.Filename,
+			file.Filename = string(shuff)
+	
+			if err := c.SaveUploadedFile(file, "./Images/"+file.Filename); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{
+					"Success": false,
+					"error":   "upload file err: " + err.Error(),
+				})
+				return
+			}
+	
+			godotenv.Load("../.env")
+			newGroup = Model.Group{
+				GroupName:     c.PostForm("group_name"),
+				LineGroup:     c.PostForm("line_group"),
+				CompanionName: c.PostForm("companion_name"),
+				IDLine:        c.PostForm("id_line"),
+				LinkFoto:      os.Getenv("BASE_URL") + "/api/admin/image/" + file.Filename,
+			}
+		} else {
+			if res := db.Where("id = ?", id).Take(&group); res.Error != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"success": false,
+					"message": "Error when updating the database.",
+					"error":   res.Error.Error(),
+				})
+			}
+			newGroup = Model.Group{
+				GroupName:     c.PostForm("group_name"),
+				LineGroup:     c.PostForm("line_group"),
+				CompanionName: c.PostForm("companion_name"),
+				IDLine:        c.PostForm("id_line"),
+				LinkFoto:      group.LinkFoto,
+			}
 		}
 
 		result := db.Where("id = ?", id).Model(&newGroup).Updates(newGroup)

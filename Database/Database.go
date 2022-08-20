@@ -58,13 +58,13 @@ func Open() *gorm.DB {
 	}
 
 	group := Model.Group{
-		GroupName: "Grup 1",
-		LineGroup: "line.com",
-		CompanionName: "pendamping",
-		IDLine: "@pendamping",
-		LinkFoto: "ini-foto",
-	}
-
+        GroupName: "Belum diatur",
+        LineGroup: "Belum diatur",
+        CompanionName: "Belum diatur",
+        IDLine: "Belum diatur",
+        LinkFoto: "Belum diatur",
+    }
+	
 	if result := db.Create(&group); result.Error != nil {
 		fmt.Println(result.Error.Error())
 		fmt.Println("this is expected, server will run normally")

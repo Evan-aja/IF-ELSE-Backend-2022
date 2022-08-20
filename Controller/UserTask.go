@@ -77,7 +77,7 @@ func UserTask(db *gorm.DB, q *gin.Engine) {
 		if err := db.Updates(&signTask); err.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
-				"message": "error when inserting a new permission link",
+				"message": "error when inserting a new task link",
 				"error":   err.Error.Error(),
 			})
 			return

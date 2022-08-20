@@ -75,6 +75,7 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 		}
 
 		var group Model.Group
+		var ret []Student
 
 		for i := 0; i < len(queryResults); i++ {
 			if result := db.Where("id = ?", queryResults[i].GroupID).Find(&group); result.Error != nil {
@@ -85,22 +86,19 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 				})
 				return
 			}
-		}
-
-		var ret []Student
-
-		for _, value := range queryResults {
 			var temp Student
-			temp.ID = value.ID
-			temp.Name = value.Name
+			temp.ID = queryResults[i].ID
+			temp.Name = queryResults[i].Name
 			temp.GroupName = group.GroupName
-			temp.NIM = value.NIM
+			temp.NIM = queryResults[i].NIM
 			ret = append(ret, temp)
 		}
+
 		c.JSON(http.StatusOK, gin.H{
 			"success": true,
 			"message": "query completed.",
 			"data":    ret,
+			"length": len(ret),
 		})
 
 		// for  i := 0, element := index quequeryResults {
@@ -176,7 +174,7 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 		stask := []Model.StudentTask{}
 
 		// preload task, mahasiswa, dan links
-		if result := db.Where("student_id = ?", id).Preload("Task").Preload("Student").Find(&stask); result.Error != nil {
+		if result := db.Where("student_id = ?", id).Find(&stask); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
 				"message": "Error when querying the database.",
@@ -184,6 +182,19 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 			})
 			return
 		}
+
+		// taskTitle := Model.Task{}
+
+		// if result := db.Where("task_id = ?", stask.).Find(&stask); result.Error != nil {
+		// 	c.JSON(http.StatusInternalServerError, gin.H{
+		// 		"success": false,
+		// 		"message": "Error when querying the database.",
+		// 		"error":   result.Error.Error(),
+		// 	})
+		// 	return
+		// }
+
+
 
 		smark := []Model.Marking{}
 

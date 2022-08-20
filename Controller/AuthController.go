@@ -110,10 +110,17 @@ func Register(db *gorm.DB, q *gin.Engine) {
 				})
 				return
 			}
+			var IsAdmin bool
+			if email.RoleId > 3 {
+				IsAdmin = false
+			} else {
+				IsAdmin = true
+			}
 			c.JSON(http.StatusOK, gin.H{
 				"success": true,
 				"message": "Welcome, here's your token. don't lose it ;)",
 				"data": gin.H{
+					"IsAdmin": IsAdmin,
 					"email": email.Email,
 					"token": strToken,
 				},

@@ -260,51 +260,69 @@ func AdminAgenda(db *gorm.DB, q *gin.Engine) {
 			})
 			return
 		} 	
+
 		id, _ := c.Params.Get("id")
 
-		image, err := c.FormFile("image")
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
+		image, _ := c.FormFile("image")
+
+		var agenda Model.Agenda
+		if res := db.Where("id = ?", id).Take(&agenda); res.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
-				"error":   "get form err: " + err.Error(),
+				"message": "Something went wrong",
+				"error":   res.Error.Error(),
 			})
 			return
 		}
-
-		rand.Seed(time.Now().Unix())
-
-		str := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
-		shuff := []rune(str)
-
-		rand.Shuffle(len(shuff), func(i, j int) {
-			shuff[i], shuff[j] = shuff[j], shuff[i]
-		})
-		image.Filename = string(shuff)
-
-		godotenv.Load("../.env")
-
-		if err := c.SaveUploadedFile(image, "./Images/"+image.Filename); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"Success": false,
-				"error":   "upload file err: " + err.Error(),
-			})
-			return
-		}
-
 		var newAgenda Model.Agenda
 		parsedId, _ := strconv.ParseUint(id, 10, 32)
 		b1, _ := strconv.ParseBool(c.PostForm("is_published"))
-		newAgenda = Model.Agenda{
-			ID:               uint(parsedId),
-			Title:            c.PostForm("title"),
-			Content:          c.PostForm("content"),
-			Image:            os.Getenv("BASE_URL") + "/api/agenda/image/" + image.Filename,
-			StartAt:          c.PostForm("start_at"),
-			EndAt:            c.PostForm("end_at"),
-			PerizinanStartAt: c.PostForm("perizinan_start_at"),
-			PerizinanEndAt:   c.PostForm("perizinan_end_at"),
-			IsPublished:      b1,
+
+		if image == nil {
+			newAgenda = Model.Agenda{
+				ID:               uint(parsedId),
+				Title:            c.PostForm("title"),
+				Content:          c.PostForm("content"),
+				Image:            agenda.Image,
+				StartAt:          c.PostForm("start_at"),
+				EndAt:            c.PostForm("end_at"),
+				PerizinanStartAt: c.PostForm("perizinan_start_at"),
+				PerizinanEndAt:   c.PostForm("perizinan_end_at"),
+				IsPublished:      b1,	
+			}
+		} else {
+			rand.Seed(time.Now().Unix())
+
+			str := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+
+			shuff := []rune(str)
+
+			rand.Shuffle(len(shuff), func(i, j int) {
+				shuff[i], shuff[j] = shuff[j], shuff[i]
+			})
+			image.Filename = string(shuff)
+
+			godotenv.Load("../.env")
+
+			if err := c.SaveUploadedFile(image, "./Images/"+image.Filename); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{
+					"Success": false,
+					"error":   "upload file err: " + err.Error(),
+				})
+				return
+			}
+
+			newAgenda = Model.Agenda{
+				ID:               uint(parsedId),
+				Title:            c.PostForm("title"),
+				Content:          c.PostForm("content"),
+				Image:            os.Getenv("BASE_URL") + "/api/agenda/image/" + image.Filename,
+				StartAt:          c.PostForm("start_at"),
+				EndAt:            c.PostForm("end_at"),
+				PerizinanStartAt: c.PostForm("perizinan_start_at"),
+				PerizinanEndAt:   c.PostForm("perizinan_end_at"),
+				IsPublished:      b1,
+			}
 		}
 
 		if err := db.Where("id = ?", id).Model(&newAgenda).Select("*").Updates(newAgenda); err.Error != nil {

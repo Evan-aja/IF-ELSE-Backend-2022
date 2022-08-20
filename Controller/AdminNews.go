@@ -232,36 +232,59 @@ func AdminNews(db *gorm.DB, q *gin.Engine) {
 
 		file, _ := c.FormFile("image")
 
-		rand.Seed(time.Now().Unix())
-
-		str := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-
-		shuff := []rune(str)
-
-		rand.Shuffle(len(shuff), func(i, j int) {
-			shuff[i], shuff[j] = shuff[j], shuff[i]
-		})
-		file.Filename = string(shuff)
-
-		if err := c.SaveUploadedFile(file, "./Images/"+file.Filename); err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"Success": false,
-				"error":   "upload file err: " + err.Error(),
-			})
-			return
-		}
 		var newNews Model.News
+		var news Model.News
 
-		b1, _ := strconv.ParseBool(c.PostForm("is_published"))
-		parsedId, _ := strconv.ParseUint(id, 10, 32)
-		godotenv.Load("../.env")
-		newNews = Model.News{
+		if file != nil {
+			rand.Seed(time.Now().Unix())
+
+			str := "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
+	
+			shuff := []rune(str)
+	
+			rand.Shuffle(len(shuff), func(i, j int) {
+				shuff[i], shuff[j] = shuff[j], shuff[i]
+			})
+			file.Filename = string(shuff)
+	
+			if err := c.SaveUploadedFile(file, "./Images/"+file.Filename); err != nil {
+				c.JSON(http.StatusBadRequest, gin.H{
+					"Success": false,
+					"error":   "upload file err: " + err.Error(),
+				})
+				return
+			}
+	
+			b1, _ := strconv.ParseBool(c.PostForm("is_published"))
+			parsedId, _ := strconv.ParseUint(id, 10, 32)
+			godotenv.Load("../.env")
+			newNews = Model.News{
+				ID:          uint(parsedId),
+				Title:       c.PostForm("title"),
+				Image:       os.Getenv("BASE_URL") + "/api/admin/news/" + file.Filename,
+				Content:     c.PostForm("content"),
+				IsPublished: b1,
+			}
+		} else {
+			if res := db.Where("id = ? ", id).Take(&news); res.Error != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"success": false,
+					"message": "error when querying the database.",
+					"error":   res.Error.Error(),
+				})
+			}
+			b1, _ := strconv.ParseBool(c.PostForm("is_published"))
+			parsedId, _ := strconv.ParseUint(id, 10, 32)
+			godotenv.Load("../.env")
+			newNews = Model.News{
 			ID:          uint(parsedId),
 			Title:       c.PostForm("title"),
-			Image:       os.Getenv("BASE_URL") + "/api/admin/news/" + file.Filename,
+			Image:       newNews.Image,
 			Content:     c.PostForm("content"),
 			IsPublished: b1,
+			}
 		}
+
 
 		result := db.Where("id = ?", id).Model(&newNews).Select("*").Updates(newNews)
 		if result.Error != nil {
