@@ -91,7 +91,7 @@ func AdminNews(db *gorm.DB, q *gin.Engine) {
 
 		c.JSON(http.StatusCreated, gin.H{
 			"success": true,
-			"message": "a new group has successfully created",
+			"message": "a new news has successfully created",
 			"error":   nil,
 			"judul":   newNews.Title,
 		})
@@ -230,14 +230,7 @@ func AdminNews(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		file, err := c.FormFile("image")
-		if err != nil {
-			c.JSON(http.StatusBadRequest, gin.H{
-				"success": false,
-				"error":   "get form err: " + err.Error(),
-			})
-			return
-		}
+		file, _ := c.FormFile("image")
 
 		rand.Seed(time.Now().Unix())
 
@@ -250,7 +243,7 @@ func AdminNews(db *gorm.DB, q *gin.Engine) {
 		})
 		file.Filename = string(shuff)
 
-		if err := c.SaveUploadedFile(file, "./images/"+file.Filename); err != nil {
+		if err := c.SaveUploadedFile(file, "./Images/"+file.Filename); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"Success": false,
 				"error":   "upload file err: " + err.Error(),

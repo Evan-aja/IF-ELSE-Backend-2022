@@ -235,7 +235,7 @@ func AdminGroup(db *gorm.DB, q *gin.Engine) {
 		})
 		file.Filename = string(shuff)
 
-		if err := c.SaveUploadedFile(file, "./images/"+file.Filename); err != nil {
+		if err := c.SaveUploadedFile(file, "./Images/"+file.Filename); err != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"Success": false,
 				"error":   "upload file err: " + err.Error(),

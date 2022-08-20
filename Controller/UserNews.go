@@ -55,7 +55,7 @@ func UserNews(db *gorm.DB, q *gin.Engine) {
 		if result := db.Where("id = ?", id).Take(&news); result.Error != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"success": false,
-				"message": "students is not found.",
+				"message": "news is not found.",
 				"error":   result.Error.Error(),
 			})
 			return
@@ -70,8 +70,8 @@ func UserNews(db *gorm.DB, q *gin.Engine) {
 
 	// get a latest news
 	r.GET("/latest-news", func(c *gin.Context) {
-		var news Model.News
-		if result := db.Last(&news); result.Error != nil {
+		var news []Model.News
+		if result := db.Order("id desc").Find(&news).Limit(4); result.Error != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"success": false,
 				"message": "news is not found.",
