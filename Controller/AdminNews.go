@@ -1,6 +1,7 @@
 package Controller
 
 import (
+	"fmt"
 	"ifelse/Auth"
 	"ifelse/Model"
 	"math/rand"
@@ -276,13 +277,14 @@ func AdminNews(db *gorm.DB, q *gin.Engine) {
 			b1, _ := strconv.ParseBool(c.PostForm("is_published"))
 			parsedId, _ := strconv.ParseUint(id, 10, 32)
 			godotenv.Load("../.env")
-			newNews = Model.News{
-			ID:          uint(parsedId),
-			Title:       c.PostForm("title"),
-			Image:       newNews.Image,
-			Content:     c.PostForm("content"),
-			IsPublished: b1,
+			newNews = Model.News {
+				ID:          uint(parsedId),
+				Title:       c.PostForm("title"),
+				Image:       news.Image,
+				Content:     c.PostForm("content"),
+				IsPublished: b1,
 			}
+			fmt.Println(newNews.Image)
 		}
 
 

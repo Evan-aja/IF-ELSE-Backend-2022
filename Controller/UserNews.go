@@ -1,6 +1,7 @@
 package Controller
 
 import (
+	"fmt"
 	"ifelse/Model"
 	"net/http"
 
@@ -19,8 +20,7 @@ func UserNews(db *gorm.DB, q *gin.Engine) {
 	// get all news (show title and content)
 	r.GET("/news", func(c *gin.Context) {
 		var news []Model.News
-
-		if res := db.Find(&news); res.Error != nil {
+		if res := db.Where("is_published = ?", true).Find(&news); res.Error != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"success": false,
 				"message": "news is not found.",
@@ -28,6 +28,8 @@ func UserNews(db *gorm.DB, q *gin.Engine) {
 			})
 			return
 		}
+
+		fmt.Println(news)
 
 		var ret []News
 
@@ -71,7 +73,7 @@ func UserNews(db *gorm.DB, q *gin.Engine) {
 	// get a latest news
 	r.GET("/latest-news", func(c *gin.Context) {
 		var news []Model.News
-		if result := db.Order("id desc").Find(&news).Limit(4); result.Error != nil {
+		if result := db.Where("is_published = ?", true).Order("id desc").Find(&news).Limit(4); result.Error != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"success": false,
 				"message": "news is not found.",
@@ -93,7 +95,7 @@ func UserNews(db *gorm.DB, q *gin.Engine) {
 
 		var queryNews []Model.News
 
-		if res := db.Where("title LIKE ?", "%"+title+"%").Find(&queryNews); res.Error != nil {
+		if res := db.Where("title LIKE ?", "%"+title+"%").Where("is_published = ?", true).Find(&queryNews); res.Error != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"success": false,
 				"message": "news is not found.",

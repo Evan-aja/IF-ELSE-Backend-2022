@@ -14,5 +14,5 @@ type Agenda struct {
 	IsPublished      bool      `gorm:"default:false;notNull" json:"is_published"`
 	CreatedAt        time.Time `json:"created_at"`
 	UpdatedAt        time.Time `json:"updated_at"`
-	Perizinan        []Perizinan
+	Perizinan        []Perizinan `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 }

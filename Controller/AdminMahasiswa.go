@@ -20,11 +20,6 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 		GroupName string `json:"group_name"`
 		NIM       string `json:"nim"`
 	}
-
-	// type StudentTask struct {
-
-	// }
-
 	// untuk menampilkan seluruh data mahasiswa yang tersedia
 	// ditambah fitur search dengan menggunakan nama atau nim
 	r.POST("/admin/mahasiswa", Auth.Authorization(), func(c *gin.Context) {
@@ -68,6 +63,17 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 
 		offset := (page - 1) * pageSize
 
+		var lengthStudents []Model.Student
+
+		if res := db.Find(&lengthStudents); res.Error != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"success": false,
+				"message": "students is not found.",
+				"error":   res.Error.Error(),
+			})
+			return
+		}
+
 		var queryResults []Model.Student
 
 		if res := db.Where("name LIKE ?", "%"+name+"%").Where("nim LIKE ?", "%"+nim+"%").Offset(offset).Limit(pageSize).Find(&queryResults); res.Error != nil {
@@ -79,7 +85,7 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		var group Model.Group
+		var group []Model.Group
 		var ret []Student
 
 		for i := 0; i < len(queryResults); i++ {
@@ -94,7 +100,7 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 			var temp Student
 			temp.ID = queryResults[i].ID
 			temp.Name = queryResults[i].Name
-			temp.GroupName = group.GroupName
+			temp.GroupName = group[0].GroupName
 			temp.NIM = queryResults[i].NIM
 			ret = append(ret, temp)
 		}
@@ -103,7 +109,7 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 			"success": true,
 			"message": "query completed.",
 			"data":    ret,
-			"length":  len(ret),
+			"length":  len(lengthStudents),
 		})
 
 		// for  i := 0, element := index quequeryResults {
@@ -210,27 +216,14 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 			}
 			temp.ID = stask[i].ID
 			temp.Link = stask[i].Link
-
-			// gabisa nampilin titlenya
 			temp.TaskTitle = task[0].Title
 			temp.UpdatedAt = stask[i].UpdatedAt
 			ret = append(ret, temp)
 		}
 
-		// taskTitle := Model.Task{}
-
-		// if result := db.Where("task_id = ?", stask.).Find(&stask); result.Error != nil {
-		// 	c.JSON(http.StatusInternalServerError, gin.H{
-		// 		"success": false,
-		// 		"message": "Error when querying the database.",
-		// 		"error":   result.Error.Error(),
-		// 	})
-		// 	return
-		// }
-
 		smark := []Model.Marking{}
 
-		if result := db.Where("student_id = ?", id).Find(&smark); result.Error != nil {
+		if result := db.Where("student_id = ?", id).Preload("Agenda").Find(&smark); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
 				"message": "Error when querying the database.",

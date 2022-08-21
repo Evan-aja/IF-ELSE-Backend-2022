@@ -8,7 +8,7 @@ type Task struct {
 	Step        string `gorm:"type:text;notNull" json:"step"`
 	JumlahLink  int32  `json:"jumlah_link"`
 	Deadline    string `json:"deadline"`
-	Links       []Links
+	Links       []Links `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
 }
 
 type Links struct {

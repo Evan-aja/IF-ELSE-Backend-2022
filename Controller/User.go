@@ -20,7 +20,7 @@ func User(db *gorm.DB, q *gin.Engine) {
 	r.GET("/profile", Auth.Authorization(), func(c *gin.Context) {
 		id, _ := c.Get("id")
 		user := Model.User{}
-		if err := db.Where("id=?", id).Preload("Student").Take(&user); err.Error != nil {
+		if err := db.Where("id=?", id).Take(&user); err.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
 				"message": "Something went wrong",
@@ -29,18 +29,101 @@ func User(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
+		var mahasiswa Model.Student
+
+		if result := db.Where("id = ?", id).Take(&mahasiswa); result.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Error when querying the database.",
+				"error":   result.Error.Error(),
+			})
+			return
+		}
+		var group Model.Group
+
+		if result := db.Where("id = ?", mahasiswa.GroupID).Find(&group); result.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Error when querying the database.",
+				"error":   result.Error.Error(),
+			})
+			return
+		}
+
+		var stask []Model.StudentTask
+
+		// preload task, mahasiswa, dan links
+		if result := db.Where("student_id = ?", id).Find(&stask); result.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Error when querying the database.",
+				"error":   result.Error.Error(),
+			})
+			return
+		}
+
+		var task []Model.Task
+		type StudentTask struct {
+			ID        uint      `json:"id"`
+			TaskID    uint      `json:"task_id"`
+			TaskTitle string    `json:"task_title"`
+			Link      string    `json:"link"`
+			UpdatedAt time.Time `json:"time"`
+		}
+
+		var ret []StudentTask
+		var temp StudentTask
+
+		for i := 0; i < len(stask); i++ {
+			if res := db.Where("id = ?", &stask[i].TaskID).Find(&task); res.Error != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"message": "can't found task",
+					"success": false,
+					"error":   res.Error.Error(),
+				})
+				return
+			}
+			temp.ID = stask[i].ID
+			temp.Link = stask[i].Link
+			temp.TaskID = task[0].ID
+			temp.TaskTitle = task[0].Title
+			temp.UpdatedAt = stask[i].UpdatedAt
+			ret = append(ret, temp)
+		}
+
+		smark := []Model.Marking{}
+
+		if result := db.Where("student_id = ?", id).Preload("Agenda").Find(&smark); result.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Error when querying the database.",
+				"error":   result.Error.Error(),
+			})
+			return
+		}
+
+		mahasiswa.GroupName = group.GroupName
+		mahasiswa.Marking = smark
+
 		c.JSON(http.StatusOK, gin.H{
-			"success": true,
-			"error":   nil,
-			"message": "success",
-			"data": gin.H{
-				"id":       user.ID,
-				"name":     user.Name,
-				"username": user.Username,
-				"email":    user.Email,
-				"student":  user.Student,
-			},
+			"success":      true,
+			"message":      "success.",
+			"data":         mahasiswa,
+			"student_task": ret,
 		})
+
+		// c.JSON(http.StatusOK, gin.H{
+		// 	"success": true,
+		// 	"error":   nil,
+		// 	"message": "success",
+		// 	"data": gin.H{
+		// 		"id":       user.ID,
+		// 		"name":     user.Name,
+		// 		"username": user.Username,
+		// 		"email":    user.Email,
+		// 		"student":  user.Student,
+		// 	},
+		// })
 	})
 
 	r.PATCH("/profile", Auth.Authorization(), func(c *gin.Context) {
@@ -114,9 +197,32 @@ func User(db *gorm.DB, q *gin.Engine) {
 
 		user := Model.User{}
 
+		if res := db.Where("id = ?", id).Take(&user); res.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "user tidak ditemukan.",
+				"error":   res.Error.Error(),
+			})
+			return
+		}
+
+		var checkOldPassword bool
+
+		inputPassword := hash(body.Password)
+
+		if inputPassword == user.Password {
+			checkOldPassword = true
+		} else {
+			c.JSON(http.StatusForbidden, gin.H {
+				"success":false,
+				"message":"password lamamu beda dek..",
+			})
+			return
+		}
+
 		compare := body.Newpass1 == body.Newpass2
 
-		if compare {
+		if compare && checkOldPassword {
 			user = Model.User{
 				Password: hash(body.Newpass1),
 			}
@@ -169,7 +275,15 @@ func User(db *gorm.DB, q *gin.Engine) {
 		var student Model.Student
 		var newAvatar Model.Student
 
-		avatar, _ := c.FormFile("avatar")
+		avatar, err := c.FormFile("avatar")
+
+		if err != nil {
+			c.JSON(http.StatusBadRequest, gin.H{
+				"success": false,
+				"error":   "get form err: " + err.Error(),
+			})
+			return
+		}
 
 		if avatar != nil {
 			rand.Seed(time.Now().Unix())
@@ -193,7 +307,7 @@ func User(db *gorm.DB, q *gin.Engine) {
 
 			godotenv.Load("../.env")
 			newAvatar = Model.Student{
-				Avatar:      os.Getenv("BASE_URL") + "/api/user/image/" + avatar.Filename,
+				Avatar: os.Getenv("BASE_URL") + "/api/user/image/" + avatar.Filename,
 			}
 		} else {
 			if res := db.Where("id = ?", id).Take(&student); res.Error != nil {
@@ -203,9 +317,9 @@ func User(db *gorm.DB, q *gin.Engine) {
 					"error":   res.Error.Error(),
 				})
 			}
-			newAvatar = Model.Student{
-				Avatar:      student.Avatar,
-			}
+			// newAvatar = Model.Student{
+			// 	Avatar: student.Avatar,
+			// }
 		}
 
 		result := db.Where("id = ?", id).Model(&newAvatar).Updates(newAvatar)

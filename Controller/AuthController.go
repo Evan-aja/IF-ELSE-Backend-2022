@@ -79,7 +79,7 @@ func Register(db *gorm.DB, q *gin.Engine) {
 			if err := db.Where("email=?", input.Email).Take(&email); err.Error != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{
 					"success": false,
-					"message": "Email does not exist",
+					"message": "email atau password Anda salah.",
 					"error":   err.Error.Error(),
 				})
 				return
@@ -129,7 +129,7 @@ func Register(db *gorm.DB, q *gin.Engine) {
 		} else {
 			c.JSON(http.StatusForbidden, gin.H{
 				"success": false,
-				"message": "Did you forget your own password?",
+				"message": "email atau password Anda salah.",
 			})
 			return
 		}

@@ -299,7 +299,7 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 		for i := 0; i < len(ntask.Links); i++ {
 			link.Title = ntask.Links[i]
 			link.ID = 0
-			if err := db.Model(&link).Updates(link); err.Error != nil {
+			if err := db.Where("task_id = ?", task.ID).Model(&link).Updates(link); err.Error != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{
 					"message": "can't create links",
 					"success": false,
@@ -320,9 +320,9 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 				studentTask.LinkID = linkId[j]
 				fmt.Println(studentTask)
 				studentTask.ID = 0
-				if err := db.Model(&studentTask).Updates(studentTask).Error; err != nil {
+				if err := db.Where("task_id = ?", task.ID).Model(&studentTask).Select("*").Updates(studentTask).Error; err != nil {
 					c.JSON(http.StatusInternalServerError, gin.H{
-						"message": "can't create links",
+						"message": "can't updates links",
 						"success": false,
 						"error":   err.Error(),
 					})
@@ -330,6 +330,15 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 				}
 			}
 		}
+
+		// if res := db.Where("id = ?", id).Preload("Links").Find(&task); res.Error != nil {
+		// 	c.JSON(http.StatusInternalServerError, gin.H{
+		// 		"message": "error when querying database",
+		// 		"success": false,
+		// 		"error":   res.Error.Error(),
+		// 	})
+		// 	return
+		// }
 
 		c.JSON(http.StatusOK, gin.H{
 			"data":    ntask,
