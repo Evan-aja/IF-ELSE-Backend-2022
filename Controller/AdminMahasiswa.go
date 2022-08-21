@@ -191,32 +191,31 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 		var task []Model.Task
 		type StudentTask struct {
 			ID        uint      `json:"id"`
-			TaskTitle[] string    `json:"task_title"`
+			TaskTitle string    `json:"task_title"`
 			Link      string    `json:"link"`
 			UpdatedAt time.Time `json:"time"`
 		}
 
 		var ret []StudentTask
-		var temp StudentTask	
+		var temp StudentTask
 
 		for i := 0; i < len(stask); i++ {
 			if res := db.Where("id = ?", &stask[i].TaskID).Find(&task); res.Error != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"message": "can't found task",
-				"success": false,
-				"error":   res.Error.Error(),
-			})
-			return
-			}	
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"message": "can't found task",
+					"success": false,
+					"error":   res.Error.Error(),
+				})
+				return
+			}
 			temp.ID = stask[i].ID
 			temp.Link = stask[i].Link
 
 			// gabisa nampilin titlenya
-			temp.TaskTitle[i] = task[i].Title
+			temp.TaskTitle = task[0].Title
 			temp.UpdatedAt = stask[i].UpdatedAt
 			ret = append(ret, temp)
 		}
-
 
 		// taskTitle := Model.Task{}
 
@@ -244,9 +243,9 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 		mahasiswa.Marking = smark
 
 		c.JSON(http.StatusOK, gin.H{
-			"success": true,
-			"message": "query completed.",
-			"data":    mahasiswa,
+			"success":      true,
+			"message":      "query completed.",
+			"data":         mahasiswa,
 			"student_task": ret,
 		})
 
