@@ -8,7 +8,7 @@ Repository backend IF ELSE 2022
 ### About
 This is the backend repository for the IF-ELSE's web application for 2022.
 
-It is written with Go version 1.18 and uses MariaDB / MySQL as its database.
+It is written with Go version 1.19 and uses MariaDB / MySQL as its database.
 
 ### How to deploy
 
