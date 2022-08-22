@@ -198,6 +198,7 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 		type StudentTask struct {
 			ID        uint      `json:"id"`
 			TaskTitle string    `json:"task_title"`
+			LabelLink string    `json:"label_link"`
 			Link      string    `json:"link"`
 			UpdatedAt time.Time `json:"time"`
 		}
@@ -206,7 +207,7 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 		var temp StudentTask
 
 		for i := 0; i < len(stask); i++ {
-			if res := db.Where("id = ?", &stask[i].TaskID).Find(&task); res.Error != nil {
+			if res := db.Where("id = ?", &stask[i].TaskID).Preload("Links").Find(&task); res.Error != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{
 					"message": "can't found task",
 					"success": false,
@@ -216,11 +217,15 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 			}
 			temp.ID = stask[i].ID
 			temp.Link = stask[i].Link
+			for j := 0; j < len(task[0].Links); j++ {
+				for k := 0; k < len(task[0].Links); k++ {
+					temp.LabelLink = task[0].Links[k].Title			
+				}
+			}
 			temp.TaskTitle = task[0].Title
 			temp.UpdatedAt = stask[i].UpdatedAt
 			ret = append(ret, temp)
 		}
-
 		smark := []Model.Marking{}
 
 		if result := db.Where("student_id = ?", id).Preload("Agenda").Find(&smark); result.Error != nil {
