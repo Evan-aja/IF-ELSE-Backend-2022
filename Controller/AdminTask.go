@@ -1,7 +1,6 @@
 package Controller
 
 import (
-	"fmt"
 	"ifelse/Auth"
 	"ifelse/Model"
 	"net/http"
@@ -282,7 +281,6 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 			})
 			return
 		}
-		fmt.Println(oldTask.JumlahLink)
 
 		task = Model.Task{
 			ID: oldTask.ID,
@@ -293,16 +291,6 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 			JumlahLink:  ntask.JumlahLink,
 			Deadline:    ntask.Deadline,
 		}
-
-		fmt.Println(ntask.JumlahLink)
-		// if err := db.Where("id = ?", id).Model(&task).Updates(task); err.Error != nil {
-		// 	c.JSON(http.StatusInternalServerError, gin.H{
-		// 		"message": "can't updated task",
-		// 		"success": false,
-		// 		"error":   err.Error.Error(),
-		// 	})
-		// 	return
-		// }
 
 		if err := db.Where("id = ? ", id).Model(&task).Select("*").Updates(task).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
@@ -315,6 +303,17 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 
 		link = Model.Links{
 			TaskID: task.ID,
+		}
+
+		var allLink []Model.Links
+
+		if res := db.Where("task_id = ?", id).Delete(&allLink); res.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"message": "can't delete old links",
+				"success": false,
+				"error":   res.Error.Error(),
+			})
+			return
 		}
 
 		if ntask.JumlahLink > oldTask.JumlahLink {
@@ -342,7 +341,6 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 				for j := 0; j < int(task.JumlahLink); j++ {
 					studentTask.StudentID = student[i].ID
 					studentTask.LinkID = linkId[j]
-					fmt.Println(studentTask)
 					studentTask.ID = 0
 					if err := db.Create(&studentTask).Error; err != nil {
 						c.JSON(http.StatusInternalServerError, gin.H{
@@ -359,7 +357,7 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 			for i := 0; i < len(ntask.Links); i++ {
 				link.Title = ntask.Links[i]
 				link.ID = 0
-				if err := db.Delete(&link); err.Error != nil {
+				if err := db.Create(&link); err.Error != nil {
 					c.JSON(http.StatusInternalServerError, gin.H{
 						"message": "can't delete links",
 						"success": false,
@@ -376,9 +374,8 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 				for j := 0; j < int(task.JumlahLink); j++ {
 					studentTask.StudentID = student[i].ID
 					studentTask.LinkID = linkId[j]
-					fmt.Println(studentTask)
 					studentTask.ID = 0
-					if err := db.Delete(&studentTask).Error; err != nil {
+					if err := db.Create(&studentTask).Error; err != nil {
 						c.JSON(http.StatusInternalServerError, gin.H{
 							"message": "can't updates links",
 							"success": false,
@@ -388,13 +385,12 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 					}
 				}
 			}
-		}
-
-		var linkId []uint
+		} else {
+			var linkId []uint
 			for i := 0; i < len(ntask.Links); i++ {
 				link.Title = ntask.Links[i]
 				link.ID = 0
-				if err := db.Updates(&link); err.Error != nil {
+				if err := db.Create(&link); err.Error != nil {
 					c.JSON(http.StatusInternalServerError, gin.H{
 						"message": "can't create links",
 						"success": false,
@@ -413,9 +409,8 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 				for j := 0; j < int(task.JumlahLink); j++ {
 					studentTask.StudentID = student[i].ID
 					studentTask.LinkID = linkId[j]
-					fmt.Println(studentTask)
 					studentTask.ID = 0
-					if err := db.Updates(&studentTask).Error; err != nil {
+					if err := db.Create(&studentTask).Error; err != nil {
 						c.JSON(http.StatusInternalServerError, gin.H{
 							"message": "can't updates links",
 							"success": false,
@@ -425,29 +420,7 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 					}
 				}
 			}
-
-				// assign link ke siswa
-		// for i := 0; i < len(student); i++ {
-		// 	for j := 0; j < int(task.JumlahLink); j++ {
-		// 		studentTask.StudentID = student[i].ID
-		// 		studentTask.LinkID = linkId[j]
-		// 		studentTask.ID = 0
-		// 		if err := db.Create(&studentTask).Error; err != nil {
-		// 			c.JSON(http.StatusInternalServerError, gin.H{
-		// 				"message": "can't create links",
-		// 				"success": false,
-		// 				"error":   err.Error(),
-		// 			})
-		// 			return
-		// 		}
-		// 	}
-		// }
-
-		//cascade (sudah)
-
-		// if jumlah link yang baru lebih kecil daripada yang lama using db.delete
-		// else jumlah link yang baru lebih besar daripada yang lama using db.create
-		// buat link yang di dalam task
+		}
 
 		c.JSON(http.StatusOK, gin.H{
 			"data":    ntask,
