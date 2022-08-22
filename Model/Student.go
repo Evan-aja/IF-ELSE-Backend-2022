@@ -12,7 +12,7 @@ type Student struct {
 	Line        string `gorm:"default:-;size:255" json:"line"`
 	Avatar      string `gorm:"default:https://i.imgur.com/5HAGlzV.png;size:255" json:"avatar"`
 	About       string `gorm:"default:-;size:255" json:"about"`
-	Perizinan   []Perizinan
-	Marking     []Marking
-	StudentTask []StudentTask
+	Perizinan   []Perizinan `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	Marking     []Marking `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
+	StudentTask []StudentTask `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }

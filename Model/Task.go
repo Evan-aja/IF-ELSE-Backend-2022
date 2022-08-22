@@ -8,14 +8,14 @@ type Task struct {
 	Step        string `gorm:"type:text;notNull" json:"step"`
 	JumlahLink  int32  `json:"jumlah_link"`
 	Deadline    string `json:"deadline"`
-	Links       []Links `gorm:"constraint:OnUpdate:CASCADE,OnDelete:SET NULL;"`
+	Links       []Links `gorm:"constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }
 
 type Links struct {
-	ID     uint   `gorm:"primaryKey" json:"id"`
+	ID     uint   
 	TaskID uint   `json:"task_id"`
 	Title  string `gorm:"notNull" json:"title"`
-	Task   Task   `gorm:"foreignKey:TaskID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE"`
+	Task   Task   `gorm:"foreignKey:TaskID;constraint:OnUpdate:CASCADE,OnDelete:CASCADE;"`
 }
 
 type NewTask struct {

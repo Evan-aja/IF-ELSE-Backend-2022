@@ -316,7 +316,7 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 	})
 
 	// Menghapus mahasiswa berdasarkan ID yang dimiliki
-	r.DELETE("/mahasiswa/:id", Auth.Authorization(), func(c *gin.Context) {
+	r.DELETE("admin/mahasiswa/:id", Auth.Authorization(), func(c *gin.Context) {
 		ID, _ := c.Get("id")
 
 		var user Model.User

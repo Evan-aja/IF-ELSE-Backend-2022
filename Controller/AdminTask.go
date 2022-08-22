@@ -245,6 +245,7 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 
 		var ntask Model.NewTask
 		var task Model.Task
+		var oldTask Model.Task
 		var link Model.Links
 
 		if err := c.BindJSON(&ntask); err != nil {
@@ -273,7 +274,18 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 			})
 		}
 
+		if err := db.Where("id = ?", id).Take(&oldTask); err.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"message": "can't find task",
+				"success": false,
+				"error":   err.Error.Error(),
+			})
+			return
+		}
+		fmt.Println(oldTask.JumlahLink)
+
 		task = Model.Task{
+			ID: oldTask.ID,
 			Title:       ntask.Title,
 			Description: ntask.Description,
 			Condition:   ntask.Condition,
@@ -281,10 +293,20 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 			JumlahLink:  ntask.JumlahLink,
 			Deadline:    ntask.Deadline,
 		}
-		// patch data task 
-		if err := db.Where("id = ? ", id).Model(&task).Updates(task).Error; err != nil {
+
+		fmt.Println(ntask.JumlahLink)
+		// if err := db.Where("id = ?", id).Model(&task).Updates(task); err.Error != nil {
+		// 	c.JSON(http.StatusInternalServerError, gin.H{
+		// 		"message": "can't updated task",
+		// 		"success": false,
+		// 		"error":   err.Error.Error(),
+		// 	})
+		// 	return
+		// }
+
+		if err := db.Where("id = ? ", id).Model(&task).Select("*").Updates(task).Error; err != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
-				"message": "can't created task",
+				"message": "can't updated task",
 				"success": false,
 				"error":   err.Error(),
 			})
@@ -294,51 +316,138 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 		link = Model.Links{
 			TaskID: task.ID,
 		}
-		// buat link yang di dalam task
-		var linkId []uint
-		for i := 0; i < len(ntask.Links); i++ {
-			link.Title = ntask.Links[i]
-			link.ID = 0
-			if err := db.Where("task_id = ?", task.ID).Model(&link).Updates(link); err.Error != nil {
-				c.JSON(http.StatusInternalServerError, gin.H{
-					"message": "can't create links",
-					"success": false,
-					"error":   err.Error.Error(),
-				})
-				return
-			}
-			linkId = append(linkId, link.ID)
-		}
 
-		studentTask := Model.StudentTask{
-			TaskID: task.ID,
-		}
-		// assign link ke siswa
-		for i := 0; i < len(student); i++ {
-			for j := 0; j < int(task.JumlahLink); j++ {
-				studentTask.StudentID = student[i].ID
-				studentTask.LinkID = linkId[j]
-				fmt.Println(studentTask)
-				studentTask.ID = 0
-				if err := db.Where("task_id = ?", task.ID).Model(&studentTask).Select("*").Updates(studentTask).Error; err != nil {
+		if ntask.JumlahLink > oldTask.JumlahLink {
+			// buat link yang di dalam task
+			var linkId []uint
+			for i := 0; i < len(ntask.Links); i++ {
+				link.Title = ntask.Links[i]
+				link.ID = 0
+				if err := db.Create(&link); err.Error != nil {
 					c.JSON(http.StatusInternalServerError, gin.H{
-						"message": "can't updates links",
+						"message": "can't create links",
 						"success": false,
-						"error":   err.Error(),
+						"error":   err.Error.Error(),
 					})
 					return
+				}
+				linkId = append(linkId, link.ID)
+			}
+
+			studentTask := Model.StudentTask{
+				TaskID: task.ID,
+			}
+			// assign link ke siswa
+			for i := 0; i < len(student); i++ {
+				for j := 0; j < int(task.JumlahLink); j++ {
+					studentTask.StudentID = student[i].ID
+					studentTask.LinkID = linkId[j]
+					fmt.Println(studentTask)
+					studentTask.ID = 0
+					if err := db.Create(&studentTask).Error; err != nil {
+						c.JSON(http.StatusInternalServerError, gin.H{
+							"message": "can't updates links",
+							"success": false,
+							"error":   err.Error(),
+						})
+						return
+					}
+				}
+			}
+		} else if ntask.JumlahLink < oldTask.JumlahLink {
+			var linkId []uint
+			for i := 0; i < len(ntask.Links); i++ {
+				link.Title = ntask.Links[i]
+				link.ID = 0
+				if err := db.Delete(&link); err.Error != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{
+						"message": "can't delete links",
+						"success": false,
+						"error":   err.Error.Error(),
+					})
+					return
+				}
+				linkId = append(linkId, link.ID)
+			}
+			studentTask := Model.StudentTask{
+				TaskID: task.ID,
+			}
+			for i := 0; i < len(student); i++ {
+				for j := 0; j < int(task.JumlahLink); j++ {
+					studentTask.StudentID = student[i].ID
+					studentTask.LinkID = linkId[j]
+					fmt.Println(studentTask)
+					studentTask.ID = 0
+					if err := db.Delete(&studentTask).Error; err != nil {
+						c.JSON(http.StatusInternalServerError, gin.H{
+							"message": "can't updates links",
+							"success": false,
+							"error":   err.Error(),
+						})
+						return
+					}
 				}
 			}
 		}
 
-		// if res := db.Where("id = ?", id).Preload("Links").Find(&task); res.Error != nil {
-		// 	c.JSON(http.StatusInternalServerError, gin.H{
-		// 		"message": "error when querying database",
-		// 		"success": false,
-		// 		"error":   res.Error.Error(),
-		// 	})
-		// 	return
+		var linkId []uint
+			for i := 0; i < len(ntask.Links); i++ {
+				link.Title = ntask.Links[i]
+				link.ID = 0
+				if err := db.Updates(&link); err.Error != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{
+						"message": "can't create links",
+						"success": false,
+						"error":   err.Error.Error(),
+					})
+					return
+				}
+				linkId = append(linkId, link.ID)
+			}
+
+			studentTask := Model.StudentTask{
+				TaskID: task.ID,
+			}
+			// assign link ke siswa
+			for i := 0; i < len(student); i++ {
+				for j := 0; j < int(task.JumlahLink); j++ {
+					studentTask.StudentID = student[i].ID
+					studentTask.LinkID = linkId[j]
+					fmt.Println(studentTask)
+					studentTask.ID = 0
+					if err := db.Updates(&studentTask).Error; err != nil {
+						c.JSON(http.StatusInternalServerError, gin.H{
+							"message": "can't updates links",
+							"success": false,
+							"error":   err.Error(),
+						})
+						return
+					}
+				}
+			}
+
+				// assign link ke siswa
+		// for i := 0; i < len(student); i++ {
+		// 	for j := 0; j < int(task.JumlahLink); j++ {
+		// 		studentTask.StudentID = student[i].ID
+		// 		studentTask.LinkID = linkId[j]
+		// 		studentTask.ID = 0
+		// 		if err := db.Create(&studentTask).Error; err != nil {
+		// 			c.JSON(http.StatusInternalServerError, gin.H{
+		// 				"message": "can't create links",
+		// 				"success": false,
+		// 				"error":   err.Error(),
+		// 			})
+		// 			return
+		// 		}
+		// 	}
 		// }
+
+		//cascade (sudah)
+
+		// if jumlah link yang baru lebih kecil daripada yang lama using db.delete
+		// else jumlah link yang baru lebih besar daripada yang lama using db.create
+		// buat link yang di dalam task
 
 		c.JSON(http.StatusOK, gin.H{
 			"data":    ntask,
