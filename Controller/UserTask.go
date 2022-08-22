@@ -70,7 +70,7 @@ func UserTask(db *gorm.DB, q *gin.Engine) {
 		var task Model.Task
 
 		for i := 0; i < len(body.Links); i++ {
-			if res := db.Where("task_id = ?", body.ID).Find(&slink); res.Error != nil {
+			if res := db.Where("task_id = ?", body.ID).Where("student_id = ?", id).Find(&slink); res.Error != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{
 					"message": "can't create links",
 					"success": false,
@@ -79,8 +79,6 @@ func UserTask(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 			slink[i].Link = body.Links[i]
-			slink[i].StudentID = id
-
 
 			if res := db.Updates(&slink[i]); res.Error != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{
@@ -91,7 +89,7 @@ func UserTask(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 
-			if res := db.Where("id = ?", slink[i].TaskID).Take(&task); res.Error != nil {
+			if res := db.Where("id = ?", slink[0].TaskID).Take(&task); res.Error != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{
 					"message": "can't found task",
 					"success": false,
