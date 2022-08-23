@@ -79,6 +79,7 @@ func UserTask(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 			slink[i].Link = body.Links[i]
+			slink[i].SubmittedAt = time.Now()
 
 			if res := db.Updates(&slink[i]); res.Error != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{
@@ -103,7 +104,7 @@ func UserTask(db *gorm.DB, q *gin.Engine) {
 			ID uint `json:"id"`
 			TaskTitle string `json:"task_title"`
 			Link string `json:"link"`
-			UpdatedAt time.Time `json:"time"`
+			SubmittedAt time.Time `json:"time"`
 		}
 
 		var ret[] StudentTask
@@ -112,7 +113,7 @@ func UserTask(db *gorm.DB, q *gin.Engine) {
 			temp.ID = element.ID
 			temp.Link = element.Link
 			temp.TaskTitle = task.Title
-			temp.UpdatedAt = element.UpdatedAt
+			temp.SubmittedAt = time.Now()
 			ret = append(ret, temp)
 		}
 

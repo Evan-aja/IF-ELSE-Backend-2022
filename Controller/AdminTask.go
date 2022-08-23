@@ -27,7 +27,7 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		if user.RoleId > 3 {
+		if user.RoleId > 1 {
 			c.JSON(http.StatusForbidden, gin.H {
 				"success": false,
 				"message": "unauthorized access :(",
@@ -73,7 +73,7 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		if user.RoleId > 3 {
+		if user.RoleId > 1 {
 			c.JSON(http.StatusForbidden, gin.H {
 				"success": false,
 				"message": "unauthorized access :(",
@@ -199,6 +199,7 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 		for i := 0; i < len(student); i++ {
 			for j := 0; j < int(task.JumlahLink); j++ {
 				studentTask.StudentID = student[i].ID
+				studentTask.LinkPos = int32(j)
 				studentTask.LinkID = linkId[j]
 				studentTask.ID = 0
 				if err := db.Create(&studentTask).Error; err != nil {
@@ -340,11 +341,12 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 			for i := 0; i < len(student); i++ {
 				for j := 0; j < int(task.JumlahLink); j++ {
 					studentTask.StudentID = student[i].ID
+					studentTask.LinkPos = int32(j)
 					studentTask.LinkID = linkId[j]
 					studentTask.ID = 0
 					if err := db.Create(&studentTask).Error; err != nil {
 						c.JSON(http.StatusInternalServerError, gin.H{
-							"message": "can't updates links",
+							"message": "can't create studentTask",
 							"success": false,
 							"error":   err.Error(),
 						})
@@ -359,7 +361,7 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 				link.ID = 0
 				if err := db.Create(&link); err.Error != nil {
 					c.JSON(http.StatusInternalServerError, gin.H{
-						"message": "can't delete links",
+						"message": "can't create links",
 						"success": false,
 						"error":   err.Error.Error(),
 					})
@@ -373,11 +375,12 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 			for i := 0; i < len(student); i++ {
 				for j := 0; j < int(task.JumlahLink); j++ {
 					studentTask.StudentID = student[i].ID
+					studentTask.LinkPos = int32(j)
 					studentTask.LinkID = linkId[j]
 					studentTask.ID = 0
 					if err := db.Create(&studentTask).Error; err != nil {
 						c.JSON(http.StatusInternalServerError, gin.H{
-							"message": "can't updates links",
+							"message": "can't create studentTask",
 							"success": false,
 							"error":   err.Error(),
 						})
@@ -408,11 +411,12 @@ func AdminTask(db *gorm.DB, q *gin.Engine) {
 			for i := 0; i < len(student); i++ {
 				for j := 0; j < int(task.JumlahLink); j++ {
 					studentTask.StudentID = student[i].ID
+					studentTask.LinkPos = int32(j)
 					studentTask.LinkID = linkId[j]
 					studentTask.ID = 0
 					if err := db.Create(&studentTask).Error; err != nil {
 						c.JSON(http.StatusInternalServerError, gin.H{
-							"message": "can't updates links",
+							"message": "can't create studentTask",
 							"success": false,
 							"error":   err.Error(),
 						})

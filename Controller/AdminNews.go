@@ -113,7 +113,7 @@ func AdminNews(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		if user.RoleId > 3 {
+		if user.RoleId != 0 && user.RoleId != 2 {
 			c.JSON(http.StatusForbidden, gin.H {
 				"success": false,
 				"message": "unauthorized access :(",
@@ -162,7 +162,7 @@ func AdminNews(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		if user.RoleId > 3 {
+		if user.RoleId != 0 && user.RoleId != 2 {
 			c.JSON(http.StatusForbidden, gin.H {
 				"success": false,
 				"message": "unauthorized access :(",

@@ -35,7 +35,7 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		if user.RoleId > 3 {
+		if user.RoleId == 2 {
 			c.JSON(http.StatusForbidden, gin.H{
 				"success": false,
 				"message": "unauthorized access :(",
@@ -76,7 +76,7 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 
 		var queryResults []Model.Student
 
-		if res := db.Where("name LIKE ?", "%"+name+"%").Where("nim LIKE ?", "%"+nim+"%").Offset(offset).Limit(pageSize).Find(&queryResults); res.Error != nil {
+		if res := db.Where("name LIKE ?", "%"+name+"%").Where("nim LIKE ?", "%"+nim+"%").Where("name NOT LIKE ?", "%admin%").Offset(offset).Limit(pageSize).Find(&queryResults); res.Error != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"success": false,
 				"message": "students is not found.",
@@ -144,7 +144,7 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		if user.RoleId > 3 {
+		if user.RoleId == 2 {
 			c.JSON(http.StatusForbidden, gin.H{
 				"success": false,
 				"message": "unauthorized access :(",
@@ -196,12 +196,12 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 
 		var task []Model.Task
 		type StudentTask struct {
-			ID        uint      `json:"id"`
-			TaskID    uint      `json:"task_id"`
-			TaskTitle string    `json:"task_title"`
-			LabelLink string    `json:"label_link"`
-			Link      string    `json:"link"`
-			UpdatedAt time.Time `json:"time"`
+			ID          uint      `json:"id"`
+			TaskID      uint      `json:"task_id"`
+			TaskTitle   string    `json:"task_title"`
+			LabelLink   string    `json:"label_link"`
+			Link        string    `json:"link"`
+			SubmittedAt time.Time `json:"time"`
 		}
 
 		var ret []StudentTask
@@ -218,14 +218,10 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 			}
 			temp.ID = stask[i].ID
 			temp.Link = stask[i].Link
-			for j := 0; j < len(task[0].Links); j++ {
-				for k := 0; k < len(task[0].Links); k++ {
-					temp.LabelLink = task[0].Links[k].Title			
-				}
-			}
+			temp.LabelLink = task[0].Links[stask[i].LinkPos].Title
 			temp.TaskID = task[0].ID
 			temp.TaskTitle = task[0].Title
-			temp.UpdatedAt = stask[i].UpdatedAt
+			temp.SubmittedAt = stask[i].SubmittedAt
 			ret = append(ret, temp)
 		}
 		smark := []Model.Marking{}

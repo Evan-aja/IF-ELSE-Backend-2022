@@ -37,7 +37,7 @@ func AdminPerizinan(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		if user.RoleId > 3 {
+		if user.RoleId != 0 && user.RoleId != 1 {
 			c.JSON(http.StatusForbidden, gin.H {
 				"success": false,
 				"message": "unauthorized access :(",

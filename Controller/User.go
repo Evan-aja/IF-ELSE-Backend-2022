@@ -1,7 +1,6 @@
 package Controller
 
 import (
-	"fmt"
 	"ifelse/Auth"
 	"ifelse/Model"
 	"math/rand"
@@ -86,20 +85,12 @@ func User(db *gorm.DB, q *gin.Engine) {
 			}
 			temp.ID = stask[i].ID
 			temp.Link = stask[i].Link
-			if i % 2 == 0 && i < 2 {
-				temp.LabelLink = task[0].Links[0].Title
-			} else {
-				temp.LabelLink = task[0].Links[1].Title
-			}
+			temp.LabelLink = task[0].Links[stask[i].LinkPos].Title
 			temp.TaskID = task[0].ID
 			temp.TaskTitle = task[0].Title
 			temp.UpdatedAt = stask[i].UpdatedAt
 			ret = append(ret, temp)
 		}
-		fmt.Println(len(task[0].Links))
-		fmt.Println(task[0].Links[0].Title)
-		fmt.Println(task[0].Links[1].Title)
-
 		smark := []Model.Marking{}
 
 		if result := db.Where("student_id = ?", id).Preload("Agenda").Find(&smark); result.Error != nil {

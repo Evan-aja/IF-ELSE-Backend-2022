@@ -120,6 +120,7 @@ func Register(db *gorm.DB, q *gin.Engine) {
 				"success": true,
 				"message": "Welcome, here's your token. don't lose it ;)",
 				"data": gin.H{
+					"username":email.Username,
 					"IsAdmin": IsAdmin,
 					"email": email.Email,
 					"token": strToken,
