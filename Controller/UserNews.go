@@ -95,7 +95,7 @@ func UserNews(db *gorm.DB, q *gin.Engine) {
 
 		var queryNews []Model.News
 
-		if res := db.Where("title LIKE ?", "%"+title+"%").Where("is_published = ?", true).Find(&queryNews); res.Error != nil {
+		if res := db.Where("title LIKE ?", "%"+title+"%").Where("is_published = ?", true).Order("id desc").Find(&queryNews); res.Error != nil {
 			c.JSON(http.StatusBadRequest, gin.H{
 				"success": false,
 				"message": "news is not found.",

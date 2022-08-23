@@ -1,6 +1,7 @@
 package Controller
 
 import (
+	"fmt"
 	"ifelse/Auth"
 	"ifelse/Model"
 	"math/rand"
@@ -65,6 +66,7 @@ func User(db *gorm.DB, q *gin.Engine) {
 		var task []Model.Task
 		type StudentTask struct {
 			ID        uint      `json:"id"`
+			TaskID    uint      `json:"task_id"`
 			TaskTitle string    `json:"task_title"`
 			LabelLink string    `json:"label_link"`
 			Link      string    `json:"link"`
@@ -84,15 +86,19 @@ func User(db *gorm.DB, q *gin.Engine) {
 			}
 			temp.ID = stask[i].ID
 			temp.Link = stask[i].Link
-			for j := 0; j < len(task[0].Links); j++ {
-				for k := 0; k < len(task[0].Links); k++ {
-					temp.LabelLink = task[0].Links[k].Title			
-				}
+			if i % 2 == 0 && i < 2 {
+				temp.LabelLink = task[0].Links[0].Title
+			} else {
+				temp.LabelLink = task[0].Links[1].Title
 			}
+			temp.TaskID = task[0].ID
 			temp.TaskTitle = task[0].Title
 			temp.UpdatedAt = stask[i].UpdatedAt
 			ret = append(ret, temp)
 		}
+		fmt.Println(len(task[0].Links))
+		fmt.Println(task[0].Links[0].Title)
+		fmt.Println(task[0].Links[1].Title)
 
 		smark := []Model.Marking{}
 
@@ -114,19 +120,6 @@ func User(db *gorm.DB, q *gin.Engine) {
 			"data":         mahasiswa,
 			"student_task": ret,
 		})
-
-		// c.JSON(http.StatusOK, gin.H{
-		// 	"success": true,
-		// 	"error":   nil,
-		// 	"message": "success",
-		// 	"data": gin.H{
-		// 		"id":       user.ID,
-		// 		"name":     user.Name,
-		// 		"username": user.Username,
-		// 		"email":    user.Email,
-		// 		"student":  user.Student,
-		// 	},
-		// })
 	})
 
 	r.PATCH("/profile", Auth.Authorization(), func(c *gin.Context) {
@@ -216,9 +209,9 @@ func User(db *gorm.DB, q *gin.Engine) {
 		if inputPassword == user.Password {
 			checkOldPassword = true
 		} else {
-			c.JSON(http.StatusForbidden, gin.H {
-				"success":false,
-				"message":"password lamamu beda dek..",
+			c.JSON(http.StatusForbidden, gin.H{
+				"success": false,
+				"message": "password lamamu beda dek..",
 			})
 			return
 		}

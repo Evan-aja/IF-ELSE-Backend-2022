@@ -123,7 +123,7 @@ func AdminNews(db *gorm.DB, q *gin.Engine) {
 		} 	
 		var news []Model.News
 
-		if result := db.Find(&news); result.Error != nil {
+		if result := db.Order("id desc").Find(&news); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
 				"message": "Error when querying the database.",

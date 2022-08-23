@@ -197,6 +197,7 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 		var task []Model.Task
 		type StudentTask struct {
 			ID        uint      `json:"id"`
+			TaskID    uint      `json:"task_id"`
 			TaskTitle string    `json:"task_title"`
 			LabelLink string    `json:"label_link"`
 			Link      string    `json:"link"`
@@ -222,6 +223,7 @@ func AdminMahasiswa(db *gorm.DB, q *gin.Engine) {
 					temp.LabelLink = task[0].Links[k].Title			
 				}
 			}
+			temp.TaskID = task[0].ID
 			temp.TaskTitle = task[0].Title
 			temp.UpdatedAt = stask[i].UpdatedAt
 			ret = append(ret, temp)
