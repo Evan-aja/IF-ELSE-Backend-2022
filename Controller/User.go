@@ -146,7 +146,7 @@ func User(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		if result = db.Where("id = ?", id).Take(&mahasiswa); result.Error != nil {
+		if result = db.Where("id = ?", id).Take(&user.Student); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
 				"message": "Error when querying the database.",
@@ -165,7 +165,7 @@ func User(db *gorm.DB, q *gin.Engine) {
 		c.JSON(http.StatusCreated, gin.H{
 			"success": true,
 			"message": "successfully updated data.",
-			"data":    mahasiswa,
+			"data":    user.Student,
 		})
 	})
 
