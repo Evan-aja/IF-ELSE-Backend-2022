@@ -20,7 +20,7 @@ func User(db *gorm.DB, q *gin.Engine) {
 	r.GET("/profile", Auth.Authorization(), func(c *gin.Context) {
 		id, _ := c.Get("id")
 		user := Model.User{}
-		if err := db.Where("id=?", id).Take(&user); err.Error != nil {
+		if err := db.Where("id=?", id).Preload("Student").Take(&user); err.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
 				"message": "Something went wrong",
@@ -29,19 +29,9 @@ func User(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		var mahasiswa Model.Student
-
-		if result := db.Where("id = ?", id).Take(&mahasiswa); result.Error != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"success": false,
-				"message": "Error when querying the database.",
-				"error":   result.Error.Error(),
-			})
-			return
-		}
 		var group Model.Group
 
-		if result := db.Where("id = ?", mahasiswa.GroupID).Find(&group); result.Error != nil {
+		if result := db.Where("id = ?", user.Student.GroupID).Find(&group); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
 				"message": "Error when querying the database.",
@@ -53,7 +43,7 @@ func User(db *gorm.DB, q *gin.Engine) {
 		var stask []Model.StudentTask
 
 		// preload task, mahasiswa, dan links
-		if result := db.Where("student_id = ?", id).Find(&stask); result.Error != nil {
+		if result := db.Where("student_id = ?", user.StudentID).Find(&stask); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
 				"message": "Error when querying the database.",
@@ -102,19 +92,30 @@ func User(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		mahasiswa.GroupName = group.GroupName
-		mahasiswa.Marking = smark
+		user.Student.GroupName = group.GroupName
+		user.Student.Marking = smark
 
 		c.JSON(http.StatusOK, gin.H{
 			"success":      true,
 			"message":      "success.",
-			"data":         mahasiswa,
+			"data":         user.Student,
 			"student_task": ret,
 		})
 	})
 
 	r.PATCH("/profile", Auth.Authorization(), func(c *gin.Context) {
 		id, _ := c.Get("id")
+
+		var user Model.User
+
+		if err := db.Where("id=?", id).Preload("Student").Take(&user); err.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Something went wrong",
+				"error":   err.Error.Error(),
+			})
+			return
+		}
 
 		var body Model.Student
 
@@ -135,7 +136,7 @@ func User(db *gorm.DB, q *gin.Engine) {
 			About:    body.About,
 		}
 
-		result := db.Where("id = ?", id).Model(&mahasiswa).Updates(mahasiswa)
+		result := db.Where("id = ?", id).Model(user.Student).Updates(mahasiswa)
 		if result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
