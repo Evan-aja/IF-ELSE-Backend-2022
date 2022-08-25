@@ -6,6 +6,7 @@ import (
 	"ifelse/Model"
 	"net/http"
 	"os"
+	"regexp"
 	"time"
 
 	"github.com/gin-gonic/gin"
@@ -27,9 +28,23 @@ func Register(db *gorm.DB, q *gin.Engine) {
 			})
 			return
 		}
-		regist := Model.Student{
-			Name: input.Name,
-			NIM:  input.NIM,
+		var regexNIM = regexp.MustCompile(`([0-9])\w+515020+([0-9])\w+`)
+		var isMatchNIM = regexNIM.MatchString(input.NIM)
+		var regexEmail = regexp.MustCompile(`([\p{L}\d])\w+@student\.ub\.ac\.id`)
+		var isMatchEmail = regexEmail.MatchString(input.Email)
+		var regist Model.Student
+		if isMatchNIM {
+			regist = Model.Student{
+				Name: input.Name,
+				NIM:  input.NIM,
+			}
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H {
+				"success":false,
+				"message": "format NIM salah",
+				"error": nil,
+			})
+			return
 		}
 		if err := db.Create(&regist); err.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
@@ -39,18 +54,32 @@ func Register(db *gorm.DB, q *gin.Engine) {
 			})
 			return
 		}
-		regist2 := Model.User{
-			Username:  input.Username,
-			Email:     input.Email,
-			Password:  hash(input.Password),
-			StudentID: regist.ID,
+
+		var regist2 Model.User
+		if isMatchEmail {
+			regist2 = Model.User{
+				Username:  input.Username,
+				Email:     input.Email,
+				Password:  hash(input.Password),
+				StudentID: regist.ID,
+			}
+		} else {
+			c.JSON(http.StatusBadRequest, gin.H {
+				"success":false,
+				"message": "format email Anda salah",
+				"error": nil,
+			})
+			db.Where("id = ?", regist.ID).Delete(regist)
+			return
 		}
+
 		if err := db.Create(&regist2); err.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
 				"message": "Something went wrong with user creation",
 				"error":   err.Error.Error(),
 			})
+			db.Where("id = ?", regist.ID).Delete(regist)
 			return
 		}
 		c.JSON(http.StatusOK, gin.H{

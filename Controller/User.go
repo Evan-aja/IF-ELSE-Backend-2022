@@ -1,6 +1,7 @@
 package Controller
 
 import (
+	"fmt"
 	"ifelse/Auth"
 	"ifelse/Model"
 	"math/rand"
@@ -116,6 +117,7 @@ func User(db *gorm.DB, q *gin.Engine) {
 			})
 			return
 		}
+		fmt.Println(user)
 
 		var body Model.Student
 
@@ -136,7 +138,9 @@ func User(db *gorm.DB, q *gin.Engine) {
 			About:    body.About,
 		}
 
-		result := db.Where("id = ?", id).Model(user.Student).Updates(mahasiswa)
+		user.Student = mahasiswa
+
+		result := db.Where("id = ?", user.StudentID).Model(&user.Student).Updates(user.Student)
 		if result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
@@ -146,7 +150,7 @@ func User(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		if result = db.Where("id = ?", id).Take(&user.Student); result.Error != nil {
+		if result = db.Where("id = ?", id).Preload("Student").Take(&user); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
 				"message": "Error when querying the database.",
@@ -183,7 +187,7 @@ func User(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		user := Model.User{}
+		var user Model.User
 
 		if res := db.Where("id = ?", id).Take(&user); res.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
@@ -260,7 +264,18 @@ func User(db *gorm.DB, q *gin.Engine) {
 	r.PATCH("/profile-picture", Auth.Authorization(), func(c *gin.Context) {
 		id, _ := c.Get("id")
 
-		var student Model.Student
+		var user Model.User
+
+		if res := db.Where("id = ?", id).Take(&user); res.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "user tidak ditemukan.",
+				"error":   res.Error.Error(),
+			})
+			return
+		}
+
+		// var student Model.Student
 		var newAvatar Model.Student
 
 		avatar, err := c.FormFile("avatar")
@@ -298,19 +313,16 @@ func User(db *gorm.DB, q *gin.Engine) {
 				Avatar: os.Getenv("BASE_URL") + "/api/user/image/" + avatar.Filename,
 			}
 		} else {
-			if res := db.Where("id = ?", id).Take(&student); res.Error != nil {
+			if res := db.Where("id = ?", user.StudentID).Take(&user.Student); res.Error != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{
 					"success": false,
 					"message": "Error when updating the database.",
 					"error":   res.Error.Error(),
 				})
 			}
-			// newAvatar = Model.Student{
-			// 	Avatar: student.Avatar,
-			// }
 		}
 
-		result := db.Where("id = ?", id).Model(&newAvatar).Updates(newAvatar)
+		result := db.Where("id = ?", user.StudentID).Model(&newAvatar).Updates(newAvatar)
 		if result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
@@ -320,7 +332,7 @@ func User(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
-		if result = db.Where("id = ?", id).Take(&newAvatar); result.Error != nil {
+		if result = db.Where("id = ?", user.StudentID).Take(&newAvatar); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
 				"message": "Error when querying the database.",
