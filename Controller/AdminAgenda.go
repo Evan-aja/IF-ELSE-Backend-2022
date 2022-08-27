@@ -1,7 +1,6 @@
 package Controller
 
 import (
-	"fmt"
 	"ifelse/Auth"
 	"ifelse/Model"
 	"math/rand"
@@ -105,20 +104,10 @@ func AdminAgenda(db *gorm.DB, q *gin.Engine) {
 			})
 		}
 
-		var agenda []Model.Agenda
-		if err := db.Find(&agenda); err.Error != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"message": "error when querying database",
-				"success": false,
-				"error":   err.Error.Error(),
-			})
-		}
-
 		var mark Model.Marking
 
 		mark.AgendaID = newAgenda.ID
 		for i := 0; i < len(student); i++ {
-			fmt.Println(len(student))
 			mark.StudentID = student[i].ID
 			mark.ID = 0
 			if err := db.Create(&mark).Error; err != nil {
@@ -334,9 +323,44 @@ func AdminAgenda(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 
+		var student []Model.Student
+		if err := db.Find(&student); err.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"message": "error when querying database",
+				"success": false,
+				"error":   err.Error.Error(),
+			})
+		}
+
+		var allMarking []Model.Marking
+
+		if res := db.Where("agenda_id = ?", newAgenda.ID).Delete(&allMarking); res.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"message": "error when deleting marking in database",
+				"success": false,
+				"error":   res.Error.Error(),
+			})
+		}
+
+		var mark Model.Marking
+
+		mark.AgendaID = newAgenda.ID
+		for i := 0; i < len(student); i++ {
+			mark.StudentID = student[i].ID
+			mark.ID = 0
+			if err := db.Create(&mark).Error; err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{
+					"message": "can't create links",
+					"success": false,
+					"error":   err.Error(),
+				})
+				return
+			}
+		}
+
 		c.JSON(http.StatusCreated, gin.H{
 			"success": true,
-			"message": "a new agenda has successfully created",
+			"message": "a new agenda has successfully updated",
 			"error":   nil,
 			"data":    newAgenda,
 		})

@@ -56,6 +56,17 @@ func UserTask(db *gorm.DB, q *gin.Engine) {
 	r.PATCH("/task", Auth.Authorization(), func(c *gin.Context) {
 		id, _ := c.MustGet("id").(uint)
 
+		var user Model.User
+
+		if res := db.Where("id = ?", id).Take(&user); res.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"message": "student not found",
+				"success": false,
+				"error":   res.Error.Error(),
+			})
+			return
+		}
+
 		var body Model.NewTask
 
 		if err := c.BindJSON(&body); err != nil {
@@ -70,7 +81,7 @@ func UserTask(db *gorm.DB, q *gin.Engine) {
 		var task Model.Task
 
 		for i := 0; i < len(body.Links); i++ {
-			if res := db.Where("task_id = ?", body.ID).Where("student_id = ?", id).Find(&slink); res.Error != nil {
+			if res := db.Where("task_id = ?", body.ID).Where("student_id = ?", user.StudentID).Find(&slink); res.Error != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{
 					"message": "can't create links",
 					"success": false,
@@ -113,7 +124,7 @@ func UserTask(db *gorm.DB, q *gin.Engine) {
 			temp.ID = element.ID
 			temp.Link = element.Link
 			temp.TaskTitle = task.Title
-			temp.SubmittedAt = time.Now()
+			temp.SubmittedAt = element.SubmittedAt
 			ret = append(ret, temp)
 		}
 
