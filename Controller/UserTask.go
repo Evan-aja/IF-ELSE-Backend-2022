@@ -90,7 +90,7 @@ func UserTask(db *gorm.DB, q *gin.Engine) {
 				return
 			}
 			slink[i].Link = body.Links[i]
-			slink[i].SubmittedAt = time.Now()
+			slink[i].SubmittedAt = time.Now().UTC().Local()
 
 			if res := db.Updates(&slink[i]); res.Error != nil {
 				c.JSON(http.StatusInternalServerError, gin.H{

@@ -47,9 +47,9 @@ func Register(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 		if err := db.Create(&regist); err.Error != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
+			c.JSON(http.StatusForbidden, gin.H{
 				"success": false,
-				"message": "NIM telah terdaftar!",
+				"message": "duplicate entry for NIM!",
 				"error":   err.Error.Error(),
 			})
 			return
@@ -74,82 +74,91 @@ func Register(db *gorm.DB, q *gin.Engine) {
 		}
 
 		if err := db.Create(&regist2); err.Error != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
+			c.JSON(http.StatusForbidden, gin.H{
 				"success": false,
-				"message": "Email atau NIM telah digunakan!",
+				"message": "duplicate entry for username!",
 				"error":   err.Error.Error(),
 			})
 			db.Where("id = ?", regist.ID).Delete(regist)
 			return
 		}
 
-		// belum fix
-		// var allAgenda []Model.Agenda
-		// if result := db.Find(&allAgenda); result.Error != nil {
-		// 	c.JSON(http.StatusInternalServerError, gin.H{
-		// 		"success": false,
-		// 		"message": "Error when querying the database.",
-		// 		"error":   result.Error.Error(),
-		// 	})
-		// 	return
-		// }
-		// var mark []Model.Marking
-
-		// fmt.Println(allAgenda)
-		// fmt.Println(allAgenda[0])
-		// fmt.Println(allAgenda[1])
-		// fmt.Println(allAgenda[2])
-		// // fmt.Println(allAgenda[3])
-		// for i := 0; i < len(allAgenda); i++ {
-		// 	fmt.Println(len(allAgenda))
-		// 	mark[i].AgendaID = allAgenda[i].ID
-		// 	mark[i].StudentID = regist2.ID
-		// 	mark[i].ID = 0
-		// 	if err := db.Create(&mark[i]).Error; err != nil {
-		// 		c.JSON(http.StatusInternalServerError, gin.H{
-		// 			"message": "can't create marks",
-		// 			"success": false,
-		// 			"error":   err.Error(),
-		// 		})
-		// 		return
-		// 	}
-		// }
-
-		// var studentTask []Model.StudentTask
-		// var allTask []Model.Task
-
-		// if result := db.Find(&allTask); result.Error != nil {
-		// 	c.JSON(http.StatusInternalServerError, gin.H{
-		// 		"success": false,
-		// 		"message": "Error when querying the database.",
-		// 		"error":   result.Error.Error(),
-		// 	})
-		// 	return
-		// }
-		// fmt.Println(allTask)
+		var allAgenda []Model.Agenda
+		if result := db.Find(&allAgenda); result.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Error when querying the database.",
+				"error":   result.Error.Error(),
+			})
+			return
+		}
 		
+		// check agenda is nil or not
+		if allAgenda != nil {
+			// assign marking to `mahasiswa`
+			mark := make([]Model.Marking, len(allAgenda))
 
-		// // assign link ke siswa
-		// var linkId []uint
-		// for i := 0; i < len(allTask); i++ {
-		// 	studentTask[0].StudentID = regist2.ID
-		// 	studentTask[0] = Model.StudentTask{
-		// 		TaskID: allTask[i].ID,
-		// 	}
-		// 	for j := 0; j < int(allTask[i].JumlahLink); j++ {
-		// 		studentTask[0].LinkPos = int32(j)
-		// 		studentTask[0].LinkID = linkId[j]
-		// 		studentTask[0].ID = 0
-		// 		if err := db.Create(&studentTask[0]).Error; err != nil {
-		// 			c.JSON(http.StatusInternalServerError, gin.H{
-		// 				"message": "can't create links",
-		// 				"success": false,
-		// 				"error":   err.Error(),
-		// 			})
-		// 			return
-		// 		}
-		// 	}
-		// }
+			for i, element := range allAgenda {
+				mark[i].AgendaID = element.ID
+				mark[i].StudentID = regist2.StudentID
+				mark[i].ID = 0
+				if err := db.Create(&mark[i]).Error; err != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{
+						"message": "can't create marks",
+						"success": false,
+						"error":   err.Error(),
+					})
+					return
+				}
+			}	
+		}
+
+		var allTask []Model.Task
+		
+		if result := db.Find(&allTask); result.Error != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{
+				"success": false,
+				"message": "Error when querying the database.",
+				"error":   result.Error.Error(),
+			})
+			return
+		}
+
+		if allTask != nil {
+			var allLink []Model.Links
+
+			studentTask := make([]Model.StudentTask, len(allTask))
+			
+			var linkId []uint
+			// assign link ke siswa
+			for i := 0; i < len(allTask); i++ {
+				studentTask[i].StudentID = regist2.StudentID
+				studentTask[i].TaskID = allTask[i].ID
+				if result := db.Where("task_id = ?", studentTask[i].TaskID).Find(&allLink); result.Error != nil {
+					c.JSON(http.StatusInternalServerError, gin.H{
+						"success": false,
+						"message": "Error when querying the database.",
+						"error":   result.Error.Error(),
+					})
+					return
+				}
+				linkId = append(linkId, allLink[i].ID)
+				
+				for j := 0; j < int(allTask[i].JumlahLink); j++ {
+					studentTask[i].LinkPos = int32(j)
+					studentTask[i].LinkID = linkId[j]
+					studentTask[i].ID = 0
+					if err := db.Create(&studentTask[i]).Error; err != nil {
+						c.JSON(http.StatusInternalServerError, gin.H{
+							"message": "can't create links",
+							"success": false,
+							"error":   err.Error(),
+						})
+						return
+					}
+				}
+			}
+		}
 		
 		c.JSON(http.StatusOK, gin.H{
 			"success": true,

@@ -60,7 +60,7 @@ func User(db *gorm.DB, q *gin.Engine) {
 			TaskTitle string    `json:"task_title"`
 			LabelLink string    `json:"label_link"`
 			Link      string    `json:"link"`
-			UpdatedAt time.Time `json:"time"`
+			SubmittedAt time.Time `json:"time"`
 		}
 
 		var ret []StudentTask
@@ -79,12 +79,12 @@ func User(db *gorm.DB, q *gin.Engine) {
 			temp.LabelLink = task[0].Links[stask[i].LinkPos].Title
 			temp.TaskID = task[0].ID
 			temp.TaskTitle = task[0].Title
-			temp.UpdatedAt = stask[i].UpdatedAt
+			temp.SubmittedAt = stask[i].SubmittedAt
 			ret = append(ret, temp)
 		}
 		smark := []Model.Marking{}
 
-		if result := db.Where("student_id = ?", id).Preload("Agenda").Find(&smark); result.Error != nil {
+		if result := db.Where("student_id = ?", user.StudentID).Preload("Agenda").Find(&smark); result.Error != nil {
 			c.JSON(http.StatusInternalServerError, gin.H{
 				"success": false,
 				"message": "Error when querying the database.",

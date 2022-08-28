@@ -13,5 +13,5 @@ type StudentTask struct {
 	Link        string    `gorm:"size:255" json:"link"`
 	UpdatedAt   time.Time `gorm:"default:current_timestamp;null" json:"updated_at"`
 	LinkPos     int32     `json:"link_pos"`
-	SubmittedAt time.Time `gorm:"default:null" json:"submitted_at"`
+	SubmittedAt time.Time `gorm:"default:0000-00-00T00:00:00.000Z" json:"submitted_at"`
 }
