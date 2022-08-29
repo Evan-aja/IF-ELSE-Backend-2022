@@ -29,11 +29,13 @@ func Register(db *gorm.DB, q *gin.Engine) {
 			return
 		}
 		var regexNIM = regexp.MustCompile(`([0-9])\w+515020+([0-9])\w+`)
+		var regexNIMKhusus = regexp.MustCompile(`([0-9])\w+515021+([0-9])\w+`)
 		var isMatchNIM = regexNIM.MatchString(input.NIM)
+		var isMatchNIMKhusus = regexNIMKhusus.MatchString(input.NIM)
 		var regexEmail = regexp.MustCompile(`([\p{L}\d])\w+@student\.ub\.ac\.id`)
 		var isMatchEmail = regexEmail.MatchString(input.Email)
 		var regist Model.Student
-		if isMatchNIM {
+		if isMatchNIM || isMatchNIMKhusus {
 			regist = Model.Student{
 				Name: input.Name,
 				NIM:  input.NIM,
@@ -113,54 +115,55 @@ func Register(db *gorm.DB, q *gin.Engine) {
 			}	
 		}
 
-		var allTask []Model.Task
+		// var allTask []Model.Task
 		
-		if result := db.Find(&allTask); result.Error != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{
-				"success": false,
-				"message": "Error when querying the database.",
-				"error":   result.Error.Error(),
-			})
-			return
-		}
+		// if result := db.Find(&allTask); result.Error != nil {
+		// 	c.JSON(http.StatusInternalServerError, gin.H{
+		// 		"success": false,
+		// 		"message": "Error when querying the database.",
+		// 		"error":   result.Error.Error(),
+		// 	})
+		// 	return
+		// }
 
-		if allTask != nil {
-			var allLink []Model.Links
+		// if allTask != nil {
+		// 	var allLink []Model.Links
 
-			studentTask := make([]Model.StudentTask, len(allTask))
+		// 	studentTask := make([]Model.StudentTask, len(allTask))
 			
-			var linkId []uint
-			// assign link ke siswa
-			for i := 0; i < len(allTask); i++ {
-				studentTask[i].StudentID = regist2.StudentID
-				studentTask[i].TaskID = allTask[i].ID
-				if result := db.Where("task_id = ?", studentTask[i].TaskID).Find(&allLink); result.Error != nil {
-					c.JSON(http.StatusInternalServerError, gin.H{
-						"success": false,
-						"message": "Error when querying the database.",
-						"error":   result.Error.Error(),
-					})
-					return
-				}
-				linkId = append(linkId, allLink[i].ID)
+		// 	var linkId []uint
+		// 	// assign link ke siswa
+		// 	for i := 0; i < len(allTask); i++ {
+		// 		studentTask[i].StudentID = regist2.StudentID
+		// 		studentTask[i].TaskID = allTask[i].ID
+		// 		if result := db.Where("task_id = ?", studentTask[i].TaskID).Find(&allLink); result.Error != nil {
+		// 			c.JSON(http.StatusInternalServerError, gin.H{
+		// 				"success": false,
+		// 				"message": "Error when querying the database.",
+		// 				"error":   result.Error.Error(),
+		// 			})
+		// 			return
+		// 		}
+		// 		linkId = append(linkId, allLink[i].ID)
+		// 		fmt.Println(linkId)
 				
-				for j := 0; j < int(allTask[i].JumlahLink); j++ {
-					studentTask[i].LinkPos = int32(j)
-					studentTask[i].LinkID = linkId[j]
-					studentTask[i].ID = 0
-					if err := db.Create(&studentTask[i]).Error; err != nil {
-						c.JSON(http.StatusInternalServerError, gin.H{
-							"message": "can't create links",
-							"success": false,
-							"error":   err.Error(),
-						})
-						return
-					}
-				}
-			}
-		}
+		// 		for j := 0; j < int(allTask[i].JumlahLink); j++ {
+		// 			studentTask[i].LinkPos = int32(j)
+		// 			studentTask[i].LinkID = linkId[j]
+		// 			studentTask[i].ID = 0
+		// 			if err := db.Create(&studentTask[i]).Error; err != nil {
+		// 				c.JSON(http.StatusInternalServerError, gin.H{
+		// 					"message": "can't create links",
+		// 					"success": false,
+		// 					"error":   err.Error(),
+		// 				})
+		// 				return
+		// 			}
+		// 		}
+		// 	}
+		// }
 		
-		c.JSON(http.StatusOK, gin.H{
+		c.JSON(http.StatusCreated, gin.H{
 			"success": true,
 			"message": "Account created successfully",
 			"error":   nil,
