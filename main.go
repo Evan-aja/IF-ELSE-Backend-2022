@@ -50,16 +50,16 @@ func main() {
 	})
 
 	//Routers
-	r.GET("/ping", func(c *gin.Context) {
+	r.GET("/", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
-			"message": "Welcome to IF-ELSE 2022",
+			"message": "Welcome to IF-ELSE 2022 API!",
 			"success": true,
 		})
 	})
 	r.Group("/api")
 	Controller.Register(db, r)
 	Controller.User(db, r)
-	
+
 	Controller.AdminMahasiswa(db, r)
 	Controller.AdminGroup(db, r)
 	Controller.AdminAgenda(db, r)
