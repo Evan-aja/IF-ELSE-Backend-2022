@@ -6,7 +6,7 @@ require (
 	github.com/gin-gonic/gin v1.8.1
 	github.com/joho/godotenv v1.4.0
 	gorm.io/driver/mysql v1.4.6
-	gorm.io/gorm v1.24.1
+	gorm.io/gorm v1.24.5
 )
 
 require golang.org/x/xerrors v0.0.0-20200804184101-5ec99f83aff1 // indirect
